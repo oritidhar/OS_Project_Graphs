@@ -1,12 +1,87 @@
-# VS Code
+# =========================
+# Editors / IDE
+# =========================
 .vscode/
-
-# CLion / IntelliJ leftovers
 .idea/
-cmake-build-*/
 
-# Compiled files & Executables
+# =========================
+# CMake
+# =========================
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+CTestTestfile.cmake
+Testing/
+
+# =========================
+# Build directories
+# =========================
+build/
+bin/
+dist/
+out/
+
+# =========================
+# Compiled objects / libs / executables
+# =========================
 *.o
 *.obj
+*.so
+*.a
+*.lib
+*.dll
+*.dylib
 *.exe
 *.out
+*.app
+
+# =========================
+# Debug / profiling / coverage
+# =========================
+*.dSYM/
+*.gcno
+*.gcda
+*.gcov
+coverage/
+*.prof
+gmon.out
+callgrind.out.*
+cachegrind.out.*
+vgcore.*
+valgrind-*.log
+
+# =========================
+# Logs / runtime dumps
+# =========================
+*.log
+*.pid
+*.seed
+*.stackdump
+core
+core.*
+*.core
+
+# =========================
+# Temporary files
+# =========================
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# =========================
+# OS generated files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Environment / local config
+# =========================
+.env
+.env.*
