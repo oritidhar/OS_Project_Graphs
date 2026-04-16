@@ -1,0 +1,12 @@
+# VS Code
+.vscode/
+
+# CLion / IntelliJ leftovers
+.idea/
+cmake-build-*/
+
+# Compiled files & Executables
+*.o
+*.obj
+*.exe
+*.out
