@@ -1,0 +1,9 @@
+# test: invalid graph header
+# purpose: verifies rejection of invalid vertex/edge counts
+# expected output:
+# Error: invalid graph header
+
+-1 2
+0 1 4
+1 2 7
+0 2

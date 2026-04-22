@@ -12,7 +12,7 @@ add_executable(OS_Project
     src/core/dijkstra.c
     src/core/minHeap.c
     src/io/file_parser.c
-    src/gui/layout.c
-    src/gui/renderer.c
-    src/gui/arrow_utils.c
+    # src/gui/layout.c
+    # src/gui/renderer.c
+    # src/gui/arrow_utils.c
 )

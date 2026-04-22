@@ -1,7 +1,7 @@
 
 #include   <stdlib.h>
 #include   <stdio.h>
-#include "../../include/core/minHeap.h"
+#include "core/minHeap.h"
 
 // Function to create a min heap with a given capacity
 MinHeap* createMinHeap(int capacity) {

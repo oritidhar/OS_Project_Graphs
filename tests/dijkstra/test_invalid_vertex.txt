@@ -1,0 +1,9 @@
+# test: invalid vertex in edge
+# purpose: verifies rejection of edge with vertex out of range
+# expected output:
+# Error: node index out of range on line 3
+
+3 2
+0 1 4
+1 5 7
+0 2

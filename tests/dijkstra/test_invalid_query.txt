@@ -1,0 +1,9 @@
+# test: invalid query vertex
+# purpose: verifies rejection of query with vertex out of range
+# expected output:
+# Error: query node index out of range
+
+3 2
+0 1 4
+1 2 7
+0 5
