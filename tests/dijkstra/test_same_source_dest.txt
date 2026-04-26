@@ -1,0 +1,10 @@
+# test: same source and destination
+# purpose: verifies the special case where source equals destination
+# expected output:
+# 0
+# 0
+
+3 2
+0 1 5
+1 2 7
+0 0

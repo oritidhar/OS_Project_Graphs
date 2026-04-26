@@ -85,3 +85,9 @@ Thumbs.db
 # =========================
 .env
 .env.*
+
+
+app
+app.exe
+main
+main.exe
