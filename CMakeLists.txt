@@ -3,7 +3,11 @@ project(OS_Project C)
 
 set(CMAKE_C_STANDARD 99)
 
-include_directories(include)
+include_directories(include include/core include/io include/gui)
+
+set(RAYLIB_DIR $ENV{HOME}/raylib-install)
+include_directories(${RAYLIB_DIR}/include)
+link_directories(${RAYLIB_DIR}/lib)
 
 # הרצה רגילה של דייקסטרה
 add_executable(OS_Project
