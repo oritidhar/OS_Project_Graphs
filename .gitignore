@@ -11,7 +11,6 @@ cmake-build-*/
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
-Makefile
 compile_commands.json
 CTestTestfile.cmake
 Testing/
@@ -91,3 +90,5 @@ app
 app.exe
 main
 main.exe
+dijkstra
+sim
