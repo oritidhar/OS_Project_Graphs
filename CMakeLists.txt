@@ -14,7 +14,7 @@ FetchContent_MakeAvailable(raylib)
 include_directories(include)
 
 # הרצה רגילה של דייקסטרה
-add_executable(OS_Project
+add_executable(dijkstra
     src/main.c
     src/core/graph.c
     src/core/dijkstra.c
@@ -23,7 +23,7 @@ add_executable(OS_Project
 )
 
 # הרצת GUI
-add_executable(OS_Project_GUI
+add_executable(sim
     src/gui/gui_main.c
     src/core/graph.c
     src/core/dijkstra.c
@@ -34,4 +34,4 @@ add_executable(OS_Project_GUI
     src/gui/arrow_utils.c
 )
 
-target_link_libraries(OS_Project_GUI raylib m pthread dl rt X11)
+target_link_libraries(sim raylib m pthread dl rt X11)
