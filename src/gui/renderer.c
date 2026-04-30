@@ -31,7 +31,7 @@ static void drawWeightLabel(int weight, Vector2 position) {
     };
 
     DrawRectangleRounded(labelBox, 0.35f, 8, RAYWHITE);
-    DrawRectangleRoundedLines(labelBox, 0.35f, 8, LIGHTGRAY);
+    DrawRectangleRoundedLines(labelBox, 0.35f, 8, 1.0f, LIGHTGRAY);
     DrawText(
         buffer,
         (int)(position.x - width / 2.0f),
