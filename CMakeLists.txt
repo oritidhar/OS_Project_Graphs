@@ -1,7 +1,15 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.11)
 project(OS_Project C)
 
 set(CMAKE_C_STANDARD 99)
+
+include(FetchContent)
+FetchContent_Declare(
+    raylib
+    GIT_REPOSITORY https://github.com/raysan5/raylib.git
+    GIT_TAG        5.0
+)
+FetchContent_MakeAvailable(raylib)
 
 include_directories(include)
 
