@@ -4,6 +4,7 @@
 #include "gui/layout.h"
 #include "gui/arrow_utils.h"
 #include "gui/renderer.h"
+#include "gui/ui_controls.h"
 
 #define SCREEN_WIDTH 1100
 #define SCREEN_HEIGHT 800
@@ -150,6 +151,18 @@ void runGraphGui(Graph* graph, const char* sourceFileName, int querySrc, int que
         CloseWindow();
         return;
     }
+    AnimState playStopState = {
+        .is_playing = false,
+        .waiting = false,
+        .finished = false,
+        .current_edge_index = 0,
+        .current_node = querySrc, // מתחילים בצומת המקור כדי שהסימון יופיע עליו
+        .next_node = -1,
+        .edge_progress = 0.0f,
+        .edge_timer = 0.0f,
+        .wait_timer = 0.0f
+    };
+    Rectangle buttonBounds = { 30.0f, (float)SCREEN_HEIGHT - 90.0f, 100.0f, 40.0f };
 
     while (!WindowShouldClose()) {
         BeginDrawing();
@@ -159,6 +172,9 @@ void runGraphGui(Graph* graph, const char* sourceFileName, int querySrc, int que
         drawHeader(sourceFileName, querySrc, queryDst, graph->numVertices);
         drawEdges(graph, &layout);
         drawNodes(graph, &layout);
+        draw_ready_indicator(&playStopState, &layout);
+        draw_play_stop_button(&playStopState, buttonBounds);
+        draw_arrival_message(&playStopState);
 
         EndDrawing();
     }
