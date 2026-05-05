@@ -32,6 +32,7 @@ add_executable(sim
     src/gui/layout.c
     src/gui/renderer.c
     src/gui/arrow_utils.c
+    src/gui/ui_controls.c
 )
 
 target_link_libraries(sim raylib m pthread dl rt X11)
