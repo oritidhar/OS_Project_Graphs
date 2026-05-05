@@ -59,7 +59,7 @@ valgrind-*.log
 *.pid
 *.seed
 *.stackdump
-core
+/core
 core.*
 *.core
 
