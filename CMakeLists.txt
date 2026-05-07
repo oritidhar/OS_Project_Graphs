@@ -22,7 +22,21 @@ add_executable(dijkstra
     src/io/file_parser.c
 )
 
-# הרצת GUI
+# הרצת GUI סטטי (milestone 2)
+add_executable(sim_static
+    src/gui/gui_main_static.c
+    src/core/graph.c
+    src/core/dijkstra.c
+    src/core/minHeap.c
+    src/io/file_parser.c
+    src/gui/layout.c
+    src/gui/renderer.c
+    src/gui/arrow_utils.c
+)
+
+target_link_libraries(sim_static raylib m pthread dl rt X11)
+
+# הרצת GUI עם אנימציה (milestone 3)
 add_executable(sim
     src/gui/gui_main.c
     src/core/graph.c

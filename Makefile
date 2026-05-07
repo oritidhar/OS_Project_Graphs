@@ -12,8 +12,8 @@ milestone1: $(BUILD_DIR)/Makefile
 	cp $(BUILD_DIR)/dijkstra ./dijkstra
 
 milestone2: $(BUILD_DIR)/Makefile
-	$(MAKE) -C $(BUILD_DIR) sim
-	cp $(BUILD_DIR)/sim ./sim
+	$(MAKE) -C $(BUILD_DIR) sim_static
+	cp $(BUILD_DIR)/sim_static ./sim
 
 milestone3: $(BUILD_DIR)/Makefile
 	$(MAKE) -C $(BUILD_DIR) sim

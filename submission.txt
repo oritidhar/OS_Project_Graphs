@@ -1,0 +1,6 @@
+partner1: Ori Tidhar, oriti@post.jce.ac.il, oritidhar
+partner2: Uriel Dahan, urielda@post.jce.ac.il, urielda00
+partner3: Oriel Zukerman, zukermanor@post.jce.ac.il, oriel12345
+partner4: Matanel Rahamim, matanelra@post.jce.ac.il, Matanelra
+
+https://github.com/oritidhar/OS_Project_Graphs
