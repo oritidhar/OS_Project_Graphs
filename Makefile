@@ -1,6 +1,6 @@
 BUILD_DIR = build
 
-.PHONY: all milestone1 milestone2 clean
+.PHONY: all milestone1 milestone2 milestone3 clean
 
 all: milestone1 milestone2
 
@@ -12,6 +12,10 @@ milestone1: $(BUILD_DIR)/Makefile
 	cp $(BUILD_DIR)/dijkstra ./dijkstra
 
 milestone2: $(BUILD_DIR)/Makefile
+	$(MAKE) -C $(BUILD_DIR) sim
+	cp $(BUILD_DIR)/sim ./sim
+
+milestone3: $(BUILD_DIR)/Makefile
 	$(MAKE) -C $(BUILD_DIR) sim
 	cp $(BUILD_DIR)/sim ./sim
 

@@ -29,9 +29,12 @@ add_executable(sim
     src/core/dijkstra.c
     src/core/minHeap.c
     src/io/file_parser.c
+    src/core/animator.c
     src/gui/layout.c
     src/gui/renderer.c
     src/gui/arrow_utils.c
+    src/gui/draw_entity.c
+    src/gui/ui_controls.c
 )
 
 target_link_libraries(sim raylib m pthread dl rt X11)
