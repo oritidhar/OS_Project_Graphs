@@ -30,6 +30,16 @@ Example:
 ./sim tests/dijkstra/test_normal.txt
 ```
 
+### Milestone 3 – Animated path traversal
+```bash
+make milestone3
+./sim <input_file>
+```
+Example:
+```bash
+./sim tests/dijkstra/test_normal.txt
+```
+
 ### Clean all build artifacts
 ```bash
 make clean
@@ -51,6 +61,9 @@ src dst    # query: source and destination
 
 ### Milestone 2
 Displays the graph loaded from the input file in a raylib GUI window. Each node is drawn as a labeled circle, each edge as a directed arrow with its weight shown. Node positions are calculated automatically. Supports up to 15 nodes. Static display only.
+
+### Milestone 3
+Adds animated movement of an entity along the Dijkstra shortest path. A play/stop button controls the animation. The entity moves along each edge in W×300ms (W = edge weight) and waits 1 second at each intermediate node. The shortest path is highlighted in the graph. An arrival message is shown when the destination is reached.
 
 ---
 
