@@ -4,7 +4,6 @@
 #include "gui/layout.h"
 #include "gui/arrow_utils.h"
 #include "gui/renderer.h"
-#include "gui/ui_controls.h"
 
 #define SCREEN_WIDTH 1100
 #define SCREEN_HEIGHT 800
@@ -132,53 +131,34 @@ static void drawHeader(const char* sourceFileName, int querySrc, int queryDst, i
     DrawText("ESC / close window to exit", 30, SCREEN_HEIGHT - 34, 18, GRAY);
 }
 
-void runGraphGui(Graph* graph, const char* sourceFileName, int querySrc, int queryDst) {
-    if (graph == NULL) {
-        return;
+void draw_static_graph(Graph* graph, NodeLayout* layout,
+                       const char* sourceFileName, int querySrc, int queryDst) {
+    drawHeader(sourceFileName, querySrc, queryDst, graph->numVertices);
+    drawEdges(graph, layout);
+    drawNodes(graph, layout);
+}
+
+void draw_path_highlight(int* path, int path_len, Graph* graph, NodeLayout* layout) {
+    if (!path || path_len < 2 || !graph || !layout) return;
+
+    for (int i = 0; i < path_len - 1; i++) {
+        int from = path[i];
+        int to   = path[i + 1];
+
+        if (from < 0 || to < 0 || from >= layout->count || to >= layout->count) continue;
+
+        Vector2 fromPos = layout->positions[from];
+        Vector2 toPos   = layout->positions[to];
+
+        drawArrow(fromPos, toPos, NODE_RADIUS, ORANGE);
+
+        Edge* e = graph->adjList[from];
+        while (e) {
+            if (e->target == to) {
+                drawWeightLabel(e->weight, getEdgeLabelPosition(fromPos, toPos, 18.0f));
+                break;
+            }
+            e = e->next;
+        }
     }
-
-    if (graph->numVertices > MAX_GUI_VERTICES) {
-        fprintf(stderr, "Error: GUI supports up to %d vertices\n", MAX_GUI_VERTICES);
-        return;
-    }
-
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "OS Project - Graph GUI");
-    SetTargetFPS(60);
-
-    NodeLayout layout = createCircularLayout(graph->numVertices, SCREEN_WIDTH, SCREEN_HEIGHT);
-    if (layout.positions == NULL) {
-        fprintf(stderr, "Error: failed to allocate GUI layout\n");
-        CloseWindow();
-        return;
-    }
-    AnimState playStopState = {
-        .is_playing = false,
-        .waiting = false,
-        .finished = false,
-        .current_edge_index = 0,
-        .current_node = querySrc, // מתחילים בצומת המקור כדי שהסימון יופיע עליו
-        .next_node = -1,
-        .edge_progress = 0.0f,
-        .edge_timer = 0.0f,
-        .wait_timer = 0.0f
-    };
-    Rectangle buttonBounds = { 30.0f, (float)SCREEN_HEIGHT - 90.0f, 100.0f, 40.0f };
-
-    while (!WindowShouldClose()) {
-        BeginDrawing();
-
-        ClearBackground((Color){ 248, 250, 252, 255 });
-
-        drawHeader(sourceFileName, querySrc, queryDst, graph->numVertices);
-        drawEdges(graph, &layout);
-        drawNodes(graph, &layout);
-        draw_ready_indicator(&playStopState, &layout);
-        draw_play_stop_button(&playStopState, buttonBounds);
-        draw_arrival_message(&playStopState);
-
-        EndDrawing();
-    }
-
-    freeNodeLayout(&layout);
-    CloseWindow();
 }

@@ -1,4 +1,4 @@
-#include "draw_entity.h"
+#include "gui/draw_entity.h"
 #include <math.h>
 
 void draw_entity(AnimState* state , Vector2* nodePos){
