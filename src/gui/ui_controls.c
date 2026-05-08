@@ -38,7 +38,7 @@ void draw_play_stop_button(AnimState* state, Rectangle bounds) {
     }
 
     DrawRectangleRounded(bounds, 0.25f, 8, fillColor);
-    DrawRectangleRoundedLines(bounds, 0.25f, 8, 1.0f, GRAY);
+    DrawRectangleRoundedLines(bounds, 0.25f, 8, GRAY);
     if (state->is_playing) {
         draw_stop_icon(bounds);
     } else {
@@ -47,19 +47,32 @@ void draw_play_stop_button(AnimState* state, Rectangle bounds) {
 }
 
 void draw_arrival_message(AnimState *state) {
-    if (state->finished) {
-        state->is_playing = false; // עצירה בסיום
+    if (state->finished && state->current_node != -1) {
+        state->is_playing = false;
 
         int screenWidth = GetScreenWidth();
         const char* text = "Congratulations! Destination Reached";
         int fontSize = 25;
         int textWidth = MeasureText(text, fontSize);
         int posX = (screenWidth - textWidth) / 2;
-        int posY = 40; 
+        int posY = 40;
 
         DrawRectangle(posX - 15, posY - 10, textWidth + 30, fontSize + 20, Fade(SKYBLUE, 0.9f));
         DrawRectangleLines(posX - 15, posY - 10, textWidth + 30, fontSize + 20, BLUE);
         DrawText(text, posX, posY, fontSize, DARKBLUE);
+    }
+
+    if (state->finished && state->current_node == -1) {
+        int screenWidth = GetScreenWidth();
+        const char* text = "No path found";
+        int fontSize = 25;
+        int textWidth = MeasureText(text, fontSize);
+        int posX = (screenWidth - textWidth) / 2;
+        int posY = 40;
+
+        DrawRectangle(posX - 15, posY - 10, textWidth + 30, fontSize + 20, Fade(RED, 0.2f));
+        DrawRectangleLines(posX - 15, posY - 10, textWidth + 30, fontSize + 20, RED);
+        DrawText(text, posX, posY, fontSize, RED);
     }
 }
 void draw_ready_indicator(AnimState* state, NodeLayout* layout) {

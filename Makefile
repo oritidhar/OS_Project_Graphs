@@ -11,13 +11,15 @@ milestone1: $(BUILD_DIR)/Makefile
 	$(MAKE) -C $(BUILD_DIR) dijkstra
 	cp $(BUILD_DIR)/dijkstra ./dijkstra
 
-milestone2: $(BUILD_DIR)/Makefile
-	$(MAKE) -C $(BUILD_DIR) sim_static
-	cp $(BUILD_DIR)/sim_static ./sim
+milestone2:
+	cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+	make -C build sim_static
+	cp build/sim_static ./sim_static
 
-milestone3: $(BUILD_DIR)/Makefile
-	$(MAKE) -C $(BUILD_DIR) sim
-	cp $(BUILD_DIR)/sim ./sim
+milestone3:
+	cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+	make -C build sim
+	cp build/sim ./sim
 
 clean:
 	rm -rf $(BUILD_DIR) dijkstra sim
