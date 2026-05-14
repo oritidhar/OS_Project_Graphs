@@ -31,6 +31,13 @@ static void start_all_travelers(Traveler* travelers, int count) {
     }
 }
 
+static void reset_all_travelers(Traveler* travelers, int count) {
+    for (int i = 0; i < count; i++) {
+        animator_init(&travelers[i].anim, travelers[i].path_result);
+        travelers[i].anim.is_playing = true;
+    }
+}
+
 static void cleanup(
     Graph* graph,
     Traveler* travelers,
@@ -145,6 +152,21 @@ int main(int argc, char* argv[]) {
             children_terminated = true;
         }
 
+        Rectangle restart_button = { 30, 150, 130, 40 };
+        Vector2 mouse = GetMousePosition();
+
+        if (
+            CheckCollisionPointRec(mouse, restart_button) &&
+            IsMouseButtonPressed(MOUSE_LEFT_BUTTON)
+        ) {
+            if (children_terminated) {
+                spawn_travelers(travelers, traveler_count);
+                children_terminated = false;
+            }
+
+            reset_all_travelers(travelers, traveler_count);
+        }
+
         BeginDrawing();
         ClearBackground((Color){ 248, 250, 252, 255 });
 
@@ -164,10 +186,14 @@ int main(int argc, char* argv[]) {
         }
 
         if (all_travelers_finished(travelers, traveler_count)) {
-            DrawText("All travelers arrived", 30, 30, 28, DARKGREEN);
+            DrawText("All travelers arrived", 30, 115, 28, DARKGREEN);
         } else {
-            DrawText("Travelers are moving...", 30, 30, 24, DARKGRAY);
+            DrawText("Travelers are moving...", 30, 115, 24, DARKGRAY);
         }
+
+        DrawRectangleRec(restart_button, LIGHTGRAY);
+        DrawRectangleLinesEx(restart_button, 2, DARKGRAY);
+        DrawText("Restart", 55, 160, 20, DARKGRAY);
 
         EndDrawing();
     }
