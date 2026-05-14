@@ -77,3 +77,23 @@ target_link_libraries(sim
     rt
     X11
 )
+
+# Milestone 4 - Multi-process travelers
+add_executable(sim_m4
+    src/gui/gui_main_m4.c
+    src/core/graph.c
+    src/core/dijkstra.c
+    src/core/minHeap.c
+    src/io/file_parser.c
+    src/core/animator.c
+    src/core/process_mgr.c
+    src/gui/layout.c
+    src/gui/renderer.c
+    src/gui/arrow_utils.c
+    src/gui/draw_entity.c
+    src/gui/ui_controls.c
+)
+
+target_link_libraries(sim_m4
+    raylib m pthread dl rt X11
+)
