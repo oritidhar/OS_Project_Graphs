@@ -2,6 +2,7 @@
 #define FILE_PARSER_H
 
 #include "core/graph.h"
+#include "core/traveler.h"
 
 /*
  * Parses a graph input file and returns a Graph pointer.
@@ -16,5 +17,10 @@
  *             message to stderr and returns NULL.
  */
 Graph* parseGraph(const char* filename, int* src_out, int* dst_out);
+Graph* parseGraphWithTravelers(
+    const char* filename,
+    Traveler** travelers_out,
+    int* traveler_count_out
+);
 
 #endif // FILE_PARSER_H
