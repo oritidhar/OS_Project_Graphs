@@ -11,7 +11,7 @@
  * - or "No path found" if the destination is unreachable
  * - or the special case output when start == end
  */
-void dijkstra(Graph* graph, int start, int end);
+PathResult* dijkstra(Graph* graph, int start, int end);
 
 /*
  * Run Dijkstra and return the path as a PathResult for GUI animation.

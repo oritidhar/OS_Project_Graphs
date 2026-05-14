@@ -7,13 +7,12 @@
 #include "core/graph.h"
 
 /*
- * Build the path by following the predecessor array backward from the
- * destination to the source. The path is stored in reverse order.
+ * Builds the path by following the predecessor array backward from the
+ * destination to the source. The resulting path is stored in reverse order.
  */
 static void buildPath(int end, int prev[], int path[], int* pathLen) {
     int current = end;
     *pathLen = 0;
-
     while (current != -1) {
         path[(*pathLen)++] = current;
         current = prev[current];
@@ -21,61 +20,34 @@ static void buildPath(int end, int prev[], int path[], int* pathLen) {
 }
 
 /*
- * Print the path in the required format:
- * v0 -> v1 -> v2
- */
-static void printPathFormatted(int path[], int pathLen) {
-    for (int i = pathLen - 1; i >= 0; i--) {
-        printf("%d", path[i]);
-        if (i > 0) {
-            printf(" -> ");
-        }
-    }
-    printf("\n");
-}
-
-/*
- * Free all memory owned by the heap.
- * Only active heap entries up to minHeap->size are freed here.
+ * Frees all memory allocated for the MinHeap internal structures.
  */
 static void freeMinHeapInternal(MinHeap* minHeap) {
-    if (minHeap == NULL) {
-        return;
-    }
-
+    if (minHeap == NULL) return;
     for (int i = 0; i < minHeap->size; i++) {
-        free(minHeap->array[i]);
+        if (minHeap->array[i]) free(minHeap->array[i]);
     }
-
     free(minHeap->pos);
     free(minHeap->array);
     free(minHeap);
 }
 
 /*
- * Core Dijkstra algorithm: fills distance[] and prev[] for all vertices.
- * Stops early when the target vertex is extracted from the heap.
- * Returns false if memory allocation fails.
+ * Core Dijkstra algorithm: calculates distances and predecessors for the graph.
  */
-static bool run_dijkstra_core(Graph* graph, int start, int end,
-                               int* distance, int* prev) {
+static bool run_dijkstra_core(Graph* graph, int start, int end, int* distance, int* prev) {
     int V = graph->numVertices;
     MinHeap* minHeap = createMinHeap(V);
-    if (minHeap == NULL) {
-        return false;
-    }
+    if (minHeap == NULL) return false;
 
     for (int v = 0; v < V; v++) {
         distance[v] = INT_MAX;
         prev[v] = -1;
-
         minHeap->array[v] = (MinHeapNode*)malloc(sizeof(MinHeapNode));
         if (minHeap->array[v] == NULL) {
-            fprintf(stderr, "Memory allocation failed\n");
             freeMinHeapInternal(minHeap);
             return false;
         }
-
         minHeap->array[v]->vertex = v;
         minHeap->array[v]->distance = INT_MAX;
         minHeap->pos[v] = v;
@@ -87,25 +59,16 @@ static bool run_dijkstra_core(Graph* graph, int start, int end,
 
     while (!isEmpty(minHeap)) {
         MinHeapNode* minNode = extractMin(minHeap);
-        if (minNode == NULL) {
-            break;
-        }
+        if (minNode == NULL) break;
 
         int u = minNode->vertex;
         free(minNode);
 
-        if (distance[u] == INT_MAX) {
-            break;
-        }
-
-        if (u == end) {
-            break;
-        }
+        if (distance[u] == INT_MAX || u == end) break;
 
         Edge* current = graph->adjList[u];
         while (current != NULL) {
             int v = current->target;
-
             if (minHeap->pos[v] < minHeap->size &&
                 distance[u] != INT_MAX &&
                 distance[v] > distance[u] + current->weight) {
@@ -113,122 +76,91 @@ static bool run_dijkstra_core(Graph* graph, int start, int end,
                 prev[v] = u;
                 decreaseKey(minHeap, v, distance[v]);
             }
-
             current = current->next;
         }
     }
-
     freeMinHeapInternal(minHeap);
     return true;
 }
 
 /*
- * Standard Dijkstra implementation using a min-heap priority queue.
- * The function computes shortest distances from 'start' and reconstructs
- * the path to 'end' using the predecessor array.
+ * Main Dijkstra function: computes path, reverses it for the GUI animator, 
+ * and allocates memory for the path and edge weights.
  */
-void dijkstra(Graph* graph, int start, int end) {
-    if (graph == NULL) {
-        return;
-    }
-
-    if (start == end) {
-        printf("%d\n", start);
-        printf("0\n");
-        return;
-    }
-
-    int V = graph->numVertices;
-    int distance[V];
-    int prev[V];
-    int path[V];
-    int pathLen = 0;
-
-    if (!run_dijkstra_core(graph, start, end, distance, prev)) {
-        return;
-    }
-
-    if (distance[end] == INT_MAX) {
-        printf("No path found\n");
-        return;
-    }
-
-    buildPath(end, prev, path, &pathLen);
-    printPathFormatted(path, pathLen);
-    printf("%d\n", distance[end]);
-}
-
-/*
- * Run Dijkstra and return the result as a PathResult for GUI animation.
- * Reuses run_dijkstra_core() and buildPath() from the print version.
- */
-PathResult* dijkstra_compute_path(Graph* graph, int start, int end) {
+PathResult* dijkstra(Graph* graph, int start, int end) {
     if (graph == NULL) return NULL;
 
-    PathResult* result = malloc(sizeof(PathResult));
-    if (!result) return NULL;
+    PathResult* res = malloc(sizeof(PathResult));
+    if (res == NULL) return NULL;
 
+    // Handle case where source and destination are the same
     if (start == end) {
-        result->path = malloc(sizeof(int));
-        if (!result->path) { free(result); return NULL; }
-        result->path[0] = start;
-        result->path_len = 1;
-        result->edge_weights = NULL;
-        return result;
+        res->path_len = 1;
+        res->path = malloc(sizeof(int));
+        if (res->path) res->path[0] = start;
+        res->edge_weights = NULL;
+        return res;
     }
 
     int V = graph->numVertices;
     int distance[V];
     int prev[V];
     int path_buf[V];
-    int path_len = 0;
+    int pathLen = 0;
 
-    if (!run_dijkstra_core(graph, start, end, distance, prev)) {
-        free(result);
+    if (!run_dijkstra_core(graph, start, end, distance, prev) || distance[end] == INT_MAX) {
+        free(res);
         return NULL;
     }
 
-    if (distance[end] == INT_MAX) {
-        free(result);
+    buildPath(end, prev, path_buf, &pathLen);
+    res->path_len = pathLen;
+    
+    // Allocate memory for path and weights
+    res->path = malloc(sizeof(int) * pathLen);
+    res->edge_weights = (pathLen > 1) ? malloc(sizeof(int) * (pathLen - 1)) : NULL;
+
+    if (res->path == NULL) {
+        free(res);
         return NULL;
     }
 
-    buildPath(end, prev, path_buf, &path_len);
-
-    result->path_len = path_len;
-    result->path = malloc(path_len * sizeof(int));
-    result->edge_weights = (path_len > 1) ? malloc((path_len - 1) * sizeof(int)) : NULL;
-
-    if (!result->path || (path_len > 1 && !result->edge_weights)) {
-        free(result->path);
-        free(result->edge_weights);
-        free(result);
-        return NULL;
+    // Reverse path: from (end -> start) to (start -> end)
+    for (int i = 0; i < pathLen; i++) {
+        res->path[i] = path_buf[pathLen - 1 - i];
     }
 
-    /* buildPath fills path_buf end→start; reverse it to start→end */
-    for (int i = 0; i < path_len; i++) {
-        result->path[i] = path_buf[path_len - 1 - i];
-    }
-
-    /* look up the weight of each edge from the adjacency list */
-    for (int i = 0; i < path_len - 1; i++) {
-        int from = result->path[i];
-        int to   = result->path[i + 1];
-        result->edge_weights[i] = 1;
-        Edge* e = graph->adjList[from];
+    // Fill edge weights (critical for animation speed)
+    for (int i = 0; i < pathLen - 1; i++) {
+        int u = res->path[i];
+        int v = res->path[i + 1];
+        res->edge_weights[i] = 1; // Default fallback weight
+        Edge* e = graph->adjList[u];
         while (e) {
-            if (e->target == to) { result->edge_weights[i] = e->weight; break; }
+            if (e->target == v) {
+                res->edge_weights[i] = e->weight;
+                break;
+            }
             e = e->next;
         }
     }
 
-    return result;
+    return res;
 }
 
+/*
+ * Alias for dijkstra() to maintain compatibility with GUI calls.
+ */
+PathResult* dijkstra_compute_path(Graph* graph, int start, int end) {
+    return dijkstra(graph, start, end);
+}
+
+/*
+ * Properly frees a PathResult structure and its allocated arrays.
+ */
 void free_path_result(PathResult* result) {
     if (!result) return;
-    free(result->path);
-    free(result->edge_weights);
+    if (result->path) free(result->path);
+    if (result->edge_weights) free(result->edge_weights);
     free(result);
 }
