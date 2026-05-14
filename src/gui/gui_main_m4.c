@@ -9,6 +9,7 @@
 #include "gui/draw_entity.h"
 #include "gui/ui_controls.h"
 
+
 #define SCREEN_WIDTH  1100
 #define SCREEN_HEIGHT 800
 
@@ -62,7 +63,7 @@ int main(int argc, char* argv[]) {
             draw_path_highlight(result->path, result->path_len, graph, &layout);
         }
 
-        draw_entity(&state, layout.positions);
+        draw_entity(&state, layout.positions,RED);
         draw_ready_indicator(&state, &layout);
         draw_play_stop_button(&state, buttonBounds);
         draw_arrival_message(&state);

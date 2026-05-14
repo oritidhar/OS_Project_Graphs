@@ -5,6 +5,7 @@
 #include "gui/arrow_utils.h"
 #include "gui/renderer.h"
 
+
 #define SCREEN_WIDTH 1100
 #define SCREEN_HEIGHT 800
 #define NODE_RADIUS 24.0f
@@ -31,7 +32,7 @@ static void drawWeightLabel(int weight, Vector2 position) {
     };
 
     DrawRectangleRounded(labelBox, 0.35f, 8, RAYWHITE);
-    DrawRectangleRoundedLines(labelBox, 0.35f, 8, LIGHTGRAY);
+    DrawRectangleRoundedLines(labelBox, 0.35f, 8, 2.0f, LIGHTGRAY);
     DrawText(
         buffer,
         (int)(position.x - width / 2.0f),
