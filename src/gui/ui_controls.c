@@ -1,5 +1,6 @@
 #include "gui/ui_controls.h"
 #include "raylib.h"
+#include "core/process_mgr.h"
 #include <math.h>
 
 static void draw_play_icon(Rectangle bounds) {
@@ -90,4 +91,11 @@ void draw_ready_indicator(AnimState* state, NodeLayout* layout) {
         // כיתוב קטן מעל הצומת
         DrawText("READY", (int)sourcePos.x - 20, (int)sourcePos.y - 45, 12, DARKGREEN);
     }
+}
+//ccmThis function iterates through the travelers array and renders a UI list where each traveler is labeled in their respective color.
+void draw_traveler_legend(Traveler travel[], int n){
+    for(int i = 0; i < n; i++){
+        DrawText(TextFormat("Traveler %d", i + 1),10, 50 + (i * 25), 20, travel[i].color);
+    }
+
 }

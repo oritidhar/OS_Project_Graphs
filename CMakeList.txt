@@ -56,7 +56,7 @@ target_link_libraries(sim_static
 
 # Milestone 3 - GUI with animation
 add_executable(sim
-    src/gui/gui_main_m4.c
+    src/gui/gui_main.c
     src/core/graph.c
     src/core/dijkstra.c
     src/core/minHeap.c
@@ -80,7 +80,7 @@ target_link_libraries(sim
 
 # Milestone 4 - Multi-process travelers
 add_executable(sim_m4
-    src/gui/gui_main_m4.c
+    src/gui/gui_main.c
     src/core/graph.c
     src/core/dijkstra.c
     src/core/minHeap.c
