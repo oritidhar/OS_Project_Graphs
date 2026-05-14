@@ -22,9 +22,9 @@ milestone3:
 	cp build/sim ./sim
 
 milestone4:
-	cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-	make -C build sim_m4
-	cp build/sim_m4 ./sim
+	cmake -S . -B $(BUILD_DIR) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+	$(MAKE) -C $(BUILD_DIR) sim_m4
+	cp $(BUILD_DIR)/sim_m4 ./sim
 
 clean:
-	rm -rf $(BUILD_DIR) dijkstra sim
+	rm -rf $(BUILD_DIR) dijkstra sim sim_static

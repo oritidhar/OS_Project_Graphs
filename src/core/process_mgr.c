@@ -11,7 +11,7 @@ void spawn_travelers(Traveler* travelers, int n) {
             pid_t pid  = fork();
 
             if (pid < 0) {
-                perror("fork faild");
+                perror("fork failed");
                 exit(EXIT_FAILURE);
             }
         
@@ -43,7 +43,8 @@ void spawn_travelers(Traveler* travelers, int n) {
 
         for (int i = 0; i < n; i++) {
             if (travelers[i].pid > 0) {
-                waitpid(travelers[i].pid, NULL, 0); //wait for child to terminate
+               waitpid(travelers[i].pid, NULL, 0); //wait for child to terminate
+               travelers[i].pid = -1;
             }
         }
 
