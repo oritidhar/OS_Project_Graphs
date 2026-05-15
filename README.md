@@ -4,7 +4,7 @@
 - Ori Tidhar
 - Uriel Dahan
 - Oriel Zukerman
-- Metanel Rahamim
+- Matanel Rahamim
 
 ---
 
@@ -40,6 +40,18 @@ Example:
 ./sim tests/dijkstra/test_normal.txt
 ```
 
+### Milestone 4 – Multi-traveler simulation
+```bash
+make milestone4
+./sim <input_file>
+```
+
+Example:
+```bash
+make milestone4
+./sim tests/milestone4/test_m4.txt
+```
+
 ### Clean all build artifacts
 ```bash
 make clean
@@ -64,6 +76,20 @@ Displays the graph loaded from the input file in a raylib GUI window. Each node 
 
 ### Milestone 3
 Adds animated movement of an entity along the Dijkstra shortest path. A play/stop button controls the animation. The entity moves along each edge in W×300ms (W = edge weight) and waits 1 second at each intermediate node. The shortest path is highlighted in the graph. An arrival message is shown when the destination is reached.
+
+### Milestone 4
+Milestone 4
+Extends the simulation from a single traveler to multiple travelers moving in parallel using process management (fork). The parent process performs all major tasks: parsing the extended input file, calculating Dijkstra shortest paths for all travelers, and managing the GUI animation. Each traveler is represented by a child process that prints [PID] started and waits for a signal. The parent ensures clean termination of all children using SIGTERM and waitpid().
+
+**Updated Input format:**
+The file now includes a dedicated travelers section after the graph definition:
+```
+# travelers
+3          # Number of travelers
+0 5        # Source and destination for traveler 1
+1 4        # Source and destination for traveler 2
+2 3        # Source and destination for traveler 3
+```
 
 ---
 

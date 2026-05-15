@@ -38,7 +38,7 @@ void draw_play_stop_button(AnimState* state, Rectangle bounds) {
     }
 
     DrawRectangleRounded(bounds, 0.25f, 8, fillColor);
-    DrawRectangleRoundedLines(bounds, 0.25f, 8, GRAY);
+    DrawRectangleRoundedLines(bounds, 0.35f,8,2.0f, LIGHTGRAY);
     if (state->is_playing) {
         draw_stop_icon(bounds);
     } else {
