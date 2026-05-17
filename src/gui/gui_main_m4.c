@@ -181,9 +181,8 @@ int main(int argc, char* argv[]) {
             );
         }
 
-        for (int i = 0; i < traveler_count; i++) {
-            draw_entity(&travelers[i].anim, layout.positions);
-        }
+        draw_all_travelers(travelers, traveler_count, layout.positions);
+        draw_travelers_legend(travelers, traveler_count);
 
         if (all_travelers_finished(travelers, traveler_count)) {
             DrawText("All travelers arrived", 30, 115, 28, DARKGREEN);
