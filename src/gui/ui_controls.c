@@ -2,6 +2,7 @@
 #include "raylib.h"
 #include "core/process_mgr.h"
 #include <math.h>
+#include "core/process_mgr.h"
 
 static void draw_play_icon(Rectangle bounds) {
     Vector2 triangle[3] = {
@@ -39,7 +40,11 @@ void draw_play_stop_button(AnimState* state, Rectangle bounds) {
     }
 
     DrawRectangleRounded(bounds, 0.25f, 8, fillColor);
+<<<<<<< Updated upstream
     DrawRectangleRoundedLines(bounds, 0.25f, 8, 2.0f, GRAY);
+=======
+    DrawRectangleRoundedLines(bounds, 0.25f, 8,2.0f, GRAY);
+>>>>>>> Stashed changes
     if (state->is_playing) {
         draw_stop_icon(bounds);
     } else {
@@ -92,10 +97,23 @@ void draw_ready_indicator(AnimState* state, NodeLayout* layout) {
         DrawText("READY", (int)sourcePos.x - 20, (int)sourcePos.y - 45, 12, DARKGREEN);
     }
 }
+<<<<<<< Updated upstream
 //ccmThis function iterates through the travelers array and renders a UI list where each traveler is labeled in their respective color.
 void draw_traveler_legend(Traveler travel[], int n){
     for(int i = 0; i < n; i++){
         DrawText(TextFormat("Traveler %d", i + 1),10, 50 + (i * 25), 20, travel[i].color);
     }
 
+=======
+
+void draw_traveler_legend(Traveler travel[], int n) {
+    int startY = 60; 
+    
+    DrawText("Travelers legend:", 10, startY, 20, DARKGRAY);
+    
+    for (int i = 0; i < n; i++) {
+        DrawText(TextFormat("Traveler %d (PID: %d)", i + 1, travel[i].pid), 
+                 15, startY + 30 + (i * 25), 18, travel[i].color);
+    }
+>>>>>>> Stashed changes
 }

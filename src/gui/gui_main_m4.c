@@ -130,11 +130,20 @@ int main(int argc, char* argv[]) {
             }
         }
 
+<<<<<<< Updated upstream
         // Render UI Status Text
         if (finished) {
             DrawText("Status: All travelers arrived", 30, 115, 20, DARKGREEN);
         } else if (simulation_running) {
             DrawText("Status: Simulation running", 30, 115, 20, DARKGRAY);
+=======
+        for (int i = 0; i < traveler_count; i++) {
+            draw_entity(&travelers[i].anim, layout.positions,travelers[i].color );
+        }
+
+        if (all_travelers_finished(travelers, traveler_count)) {
+            DrawText("All travelers arrived", 30, 115, 28, DARKGREEN);
+>>>>>>> Stashed changes
         } else {
             DrawText("Status: Waiting for Play", 30, 115, 20, MAROON);
         }
