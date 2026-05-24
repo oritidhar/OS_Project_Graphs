@@ -5,7 +5,7 @@
 #include "core/animator.h"
 #include "core/traveler.h"
 
-void draw_entity(AnimState* state, Vector2* nodePos, Color color);
+void draw_entity(const Traveler* traveler, const Vector2* nodePos);
 void draw_all_travelers(Traveler* travelers, int count, Vector2* nodePos);
 void draw_travelers_legend(Traveler* travelers, int count);
 

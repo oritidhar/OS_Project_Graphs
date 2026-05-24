@@ -3,34 +3,33 @@
 #include <math.h>
 #include <stdio.h>
 
-void draw_entity(AnimState* state, Vector2* nodePos, Color color)
+void draw_entity(const Traveler* traveler, const Vector2* nodePos)
 {
-    if (state->finished) {
+    if (traveler->anim.finished) {
         return;
     }
-
+    
+    int current_node = traveler->anim.current_node; //real time dynamic data from pipe in ipc
+    int next_node = traveler->anim.next_node;
+    float edge_progress = traveler->anim.edge_progress; //dynamic value between 0.0 to 1.0
+    
+    Vector2 start = nodePos[current_node];
+    Vector2 end = nodePos[next_node];
+    
     Vector2 currPos;
     float radius = 12.0f;
+    currPos.x = start.x + edge_progress * (end.x - start.x);
+    currPos.y = start.y + edge_progress * (end.y - start.y);
 
-    if (state->waiting) {
-        currPos = nodePos[state->current_node];
-        radius += sinf(GetTime() * 10.0f) * 3.0f;
-    } else {
-        Vector2 start = nodePos[state->current_node];
-        Vector2 end = nodePos[state->next_node];
 
-        currPos.x = start.x + state->edge_progress * (end.x - start.x);
-        currPos.y = start.y + state->edge_progress * (end.y - start.y);
-    }
-
-    DrawCircleV(currPos, radius, color);
-    DrawCircleLinesV(currPos, radius, BLACK);
+    DrawCircleV(currPos, radius, traveler->color);
+    
 }
 
-void draw_all_travelers(Traveler* travelers, int count, Vector2* nodePos)
+void draw_all_travelers(const Traveler* travelers, int count, const Vector2* nodePos)
 {
     for (int i = 0; i < count; i++) {
-        draw_entity(&travelers[i].anim, nodePos, travelers[i].color);
+        draw_entity(&travelers[i], nodePos);
     }
 }
 
