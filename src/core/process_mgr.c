@@ -52,7 +52,7 @@ void spawn_travelers(Traveler* travelers, int n) {
 
     }
 
-    void spawn_travelers_ipc(Traveler* travelers, int n, int (*pipe_fds)[2], struct Graph* graph) {
+    void spawn_travelers_ipc(Traveler* travelers, int n, int (*pipe_fds)[2], Graph* graph) {
         for (int i = 0; i < n; i++){
             pid_t pid = fork();
 
