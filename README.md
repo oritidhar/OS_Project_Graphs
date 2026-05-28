@@ -91,6 +91,43 @@ The file now includes a dedicated travelers section after the graph definition:
 2 3        # Source and destination for traveler 3
 ```
 
+### Milestone 5
+
+## Overview
+In this milestone, we upgraded our graph navigation simulation into a multi-process architecture using **Inter-Process Communication (IPC)**. 
+Each traveler now runs within its own dedicated child process (`fork()`) and calculates its optimal path independently. The main process (Parent) orchestrates the simulation, manages the Raylib GUI, and listens asynchronously to updates from all child processes via **Pipes**.
+
+## Architecture & System Design
+* **Parent Process:** Handles the Raylib GUI lifecycle, renders the graph, and monitors child processes using a non-blocking `read` loop to prevent interface freezing.
+* **Child Processes:** Each traveler runs as a separate process, executes Dijkstra's algorithm, and sends real-time position updates to the parent through its pipe.
+* **IPC Channel:** Unix Pipes (`pipe()`) configured to non-blocking mode.
+
+### Why Pipes over Shared Memory? (Design Rationale)
+During the design phase, we evaluated different IPC mechanisms and chose **Pipes** rather than **Shared Memory** due to the following structural and architectural benefits:
+1. **Unidirectional Data Flow:** Our system has a clear, one-way telemetry stream: child processes (travelers) generate position updates, and the parent process (GUI) consumes them. Pipes naturally fit this producer-consumer model between related processes.
+2. **Kernel-Level Synchronization:** Shared memory requires manual and error-prone synchronization using primitives to prevent race conditions (such as a child process overwriting memory while the parent is reading it). Pipes handle queuing and synchronization automatically at the OS kernel level.
+3. **Seamless Non-Blocking Polling:** By setting the read-end of the pipes to `O_NONBLOCK` via `fcntl()`, the parent can rapidly poll for new updates from multiple children inside the Raylib rendering loop, ensuring a smooth and responsive GUI without freezing.
+
+---
+
+## Test Samples (`assets/samples/`)
+We implemented 4 types of test scenarios to validate the stability of the system:
+1. `test_m5.txt` – Standard execution with parallel travelers.
+2. `test_m5_single.txt` – Single traveler baseline scenario.
+3. `test_m5_same_node.txt` – Edge case where Source equals Destination (checks for immediate exit and prevents infinite loops).
+4. `test_m5_load.txt` – Stress test involving 4 parallel travelers with intersecting paths.
+
+---
+
+## Compilation & Execution
+
+### 1. Build the Project
+Navigate to the build directory, clear cache, and compile the target:
+```bash
+cd build
+rm -rf *
+cmake ..
+make sim_m5
 ---
 
 ## Project Structure

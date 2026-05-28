@@ -1,9 +1,9 @@
 # graph definition
-
-4 2
-0 1 5
-2 3 4
+4 3
+0 1 10
+1 2 5
+2 3 8
 
 # travelers
 1
-0 3
+2 2

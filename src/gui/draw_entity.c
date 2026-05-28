@@ -8,22 +8,20 @@ void draw_entity(const Traveler* traveler, const Vector2* nodePos)
     if (traveler->anim.finished) {
         return;
     }
-    
-    int current_node = traveler->anim.current_node; //real time dynamic data from pipe in ipc
-    int next_node = traveler->anim.next_node;
-    float edge_progress = traveler->anim.edge_progress; //dynamic value between 0.0 to 1.0
-    
+
+    int current_node = traveler->anim.current_node;
+    int next_node    = traveler->anim.next_node;
+    float progress   = traveler->anim.edge_progress;
+
     Vector2 start = nodePos[current_node];
-    Vector2 end = nodePos[next_node];
-    
-    Vector2 currPos;
-    float radius = 12.0f;
-    currPos.x = start.x + edge_progress * (end.x - start.x);
-    currPos.y = start.y + edge_progress * (end.y - start.y);
+    Vector2 end   = nodePos[next_node];
 
+    Vector2 pos;
+    pos.x = start.x + progress * (end.x - start.x);
+    pos.y = start.y + progress * (end.y - start.y);
 
-    DrawCircleV(currPos, radius, traveler->color);
-    
+    DrawCircleV(pos, 12.0f, traveler->color);
+    DrawCircleLinesV(pos, 12.0f, BLACK);
 }
 
 void draw_all_travelers(const Traveler* travelers, int count, const Vector2* nodePos)

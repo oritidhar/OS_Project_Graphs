@@ -4,6 +4,7 @@
 #include "core/graph.h"
 #include "core/dijkstra.h"
 #include "core/animator.h"
+#include "core/traveler.h"
 #include "gui/renderer.h"
 #include "gui/layout.h"
 #include "gui/draw_entity.h"
@@ -25,8 +26,13 @@ int main(int argc, char* argv[]) {
     /* Compute the shortest path once; the animator reads it every tick. */
     PathResult* result = dijkstra_compute_path(graph, src, dst);
 
-    AnimState state;
-    animator_init(&state, result);
+    Traveler traveler = {0};
+    traveler.src   = src;
+    traveler.dst   = dst;
+    traveler.pid   = -1;
+    traveler.color = BLUE;
+    traveler.path_result = result;
+    animator_init(&traveler.anim, result);
 
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "OS Project - Graph Simulation");
     SetTargetFPS(60);
@@ -46,11 +52,11 @@ int main(int argc, char* argv[]) {
         float dt = GetFrameTime();
 
         /* Snapshot state before the draw call (where the button may fire). */
-        bool finished_at_frame_start = state.finished;
-        bool playing_at_frame_start  = state.is_playing;
+        bool finished_at_frame_start = traveler.anim.finished;
+        bool playing_at_frame_start  = traveler.anim.is_playing;
 
-        if (state.is_playing && !state.finished) {
-            animator_tick(&state, result, dt);
+        if (traveler.anim.is_playing && !traveler.anim.finished) {
+            animator_tick(&traveler.anim, result, dt);
         }
 
         BeginDrawing();
@@ -62,18 +68,18 @@ int main(int argc, char* argv[]) {
             draw_path_highlight(result->path, result->path_len, graph, &layout);
         }
 
-        draw_entity(&state, layout.positions);
-        draw_ready_indicator(&state, &layout);
-        draw_play_stop_button(&state, buttonBounds);
-        draw_arrival_message(&state);
+        draw_entity(&traveler, layout.positions);
+        draw_ready_indicator(&traveler.anim, &layout);
+        draw_play_stop_button(&traveler.anim, buttonBounds);
+        draw_arrival_message(&traveler.anim);
 
         EndDrawing();
 
         /* If play was just pressed while the animation had already finished,
          * restart from the beginning. */
-        if (state.is_playing && !playing_at_frame_start && finished_at_frame_start) {
-            animator_reset(&state, result);
-            state.is_playing = true;
+        if (traveler.anim.is_playing && !playing_at_frame_start && finished_at_frame_start) {
+            animator_reset(&traveler.anim, result);
+            traveler.anim.is_playing = true;
         }
     }
 
