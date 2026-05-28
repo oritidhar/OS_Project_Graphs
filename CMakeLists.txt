@@ -87,6 +87,7 @@ add_executable(sim_m4
     src/io/file_parser.c
     src/core/animator.c
     src/core/process_mgr.c
+    src/core/ipc.c
     src/gui/layout.c
     src/gui/renderer.c
     src/gui/arrow_utils.c
