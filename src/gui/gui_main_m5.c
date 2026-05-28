@@ -21,9 +21,9 @@
 #define IPC_EDGE_ANIMATION_TIME 1.4f
 
 typedef enum {
-    SIM_IDLE,     /* waiting for user — button shows "Start"   */
-    SIM_RUNNING,  /* children alive  — button shows "Stop"     */
-    SIM_STOPPED   /* done or killed  — button shows "Restart"  */
+    SIM_IDLE,    /* waiting for user — button shows "Start"   */
+    SIM_RUNNING, /* children alive  — button shows "Pause"    */
+    SIM_PAUSED   /* paused or done  — button shows "Restart"  */
 } SimState;
 
 /* ── helpers ────────────────────────────────────────────────────────────── */
@@ -137,12 +137,19 @@ static SimState do_start(Traveler* travelers, int count,
     return SIM_RUNNING;
 }
 
-static SimState do_stop(Traveler* travelers, int count, int (*pipe_fds)[2]) {
+static SimState do_pause(Traveler* travelers, int count) {
+    for (int i = 0; i < count; i++)
+        if (travelers[i].pid > 0) kill(travelers[i].pid, SIGSTOP);
+    return SIM_PAUSED;
+}
+
+static SimState do_restart(Traveler* travelers, int count,
+                           int (*pipe_fds)[2], Graph* graph) {
     for (int i = 0; i < count; i++)
         if (travelers[i].pid > 0) kill(travelers[i].pid, SIGTERM);
     wait_for_children(travelers, count);
     close_pipe_read_ends(pipe_fds, count);
-    return SIM_STOPPED;
+    return do_start(travelers, count, pipe_fds, graph);
 }
 
 /* ── button drawing ─────────────────────────────────────────────────────── */
@@ -229,7 +236,7 @@ int main(int argc, char* argv[]) {
             if (all_travelers_finished(travelers, traveler_count)) {
                 wait_for_children(travelers, traveler_count);
                 close_pipe_read_ends(pipe_fds, traveler_count);
-                sim_state = SIM_STOPPED;
+                sim_state = SIM_PAUSED; /* finished naturally → show Restart */
             }
         }
 
@@ -250,14 +257,17 @@ int main(int argc, char* argv[]) {
 
             case SIM_RUNNING:
                 DrawText("Travelers moving...", 30, 115, 22, DARKGRAY);
-                if (draw_button(btn, "Stop", RED))
-                    sim_state = do_stop(travelers, traveler_count, pipe_fds);
+                if (draw_button(btn, "Pause", ORANGE))
+                    sim_state = do_pause(travelers, traveler_count);
                 break;
 
-            case SIM_STOPPED:
-                DrawText("All travelers finished", 30, 115, 28, DARKGREEN);
+            case SIM_PAUSED:
+                if (all_travelers_finished(travelers, traveler_count))
+                    DrawText("All travelers finished", 30, 115, 28, DARKGREEN);
+                else
+                    DrawText("Paused", 30, 115, 22, ORANGE);
                 if (draw_button(btn, "Restart", DARKBLUE))
-                    sim_state = do_start(travelers, traveler_count, pipe_fds, graph);
+                    sim_state = do_restart(travelers, traveler_count, pipe_fds, graph);
                 break;
         }
 
@@ -265,8 +275,18 @@ int main(int argc, char* argv[]) {
     }
 
     /* cleanup */
-    if (sim_state == SIM_RUNNING)
-        do_stop(travelers, traveler_count, pipe_fds);
+    if (sim_state == SIM_RUNNING) {
+        for (int i = 0; i < traveler_count; i++)
+            if (travelers[i].pid > 0) kill(travelers[i].pid, SIGTERM);
+        wait_for_children(travelers, traveler_count);
+        close_pipe_read_ends(pipe_fds, traveler_count);
+    } else if (sim_state == SIM_PAUSED) {
+        /* children may still be alive if user paused mid-run */
+        for (int i = 0; i < traveler_count; i++)
+            if (travelers[i].pid > 0) kill(travelers[i].pid, SIGTERM);
+        wait_for_children(travelers, traveler_count);
+        close_pipe_read_ends(pipe_fds, traveler_count);
+    }
 
     close_pipe_read_ends(pipe_fds, traveler_count);
     freeNodeLayout(&layout);
