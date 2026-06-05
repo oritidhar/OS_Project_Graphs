@@ -9,6 +9,8 @@ typedef struct {
     int   current_node;
     int   next_node;    /* -1 when traveler just reached destination */
     bool  finished;     /* true on the final "I'm done" message */
+    bool  waiting_for_node;
+    int   blocked_at_node;
 } IPCMessage;
 
 /* Create one pipe per traveler. pipe_fds[i][0]=read, [i][1]=write */

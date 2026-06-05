@@ -1,7 +1,6 @@
 BUILD_DIR = build
 
-.PHONY: all milestone1 milestone2 milestone3 milestone4 milestone5 clean
-
+.PHONY: all milestone1 milestone2 milestone3 milestone4 milestone5 milestone6 clean
 all: milestone1 milestone2
 
 $(BUILD_DIR)/Makefile:
@@ -30,6 +29,12 @@ milestone5:
 	cmake -S . -B $(BUILD_DIR) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 	$(MAKE) -C $(BUILD_DIR) sim_m5
 	cp $(BUILD_DIR)/sim_m5 ./sim
+
+milestone6:
+	cmake -S . -B $(BUILD_DIR) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+	$(MAKE) -C $(BUILD_DIR) sim_m6
+	cp $(BUILD_DIR)/sim_m6 ./sim
 	
 clean:
 	rm -rf $(BUILD_DIR) dijkstra sim sim_static
+
