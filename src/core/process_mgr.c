@@ -6,6 +6,7 @@
 #include "core/process_mgr.h"
 #include "core/ipc.h"
 #include "core/dijkstra.h"
+#include "core/sync.h"
 
 void spawn_travelers(Traveler* travelers, int n) {
         for (int  i = 0; i < n; i++)
@@ -53,6 +54,10 @@ void spawn_travelers(Traveler* travelers, int n) {
     }
 
     void spawn_travelers_ipc(Traveler* travelers, int n, int (*pipe_fds)[2], Graph* graph) {
+        if (sync_init(graph->numVertices) != 0) {
+            fprintf(stderr, "Failed to initialize node synchronization\n");
+            exit(EXIT_FAILURE);
+        }   
         for (int i = 0; i < n; i++){
             pid_t pid = fork();
 
@@ -82,23 +87,54 @@ void spawn_travelers(Traveler* travelers, int n) {
                     exit(EXIT_FAILURE);
                 }
 
-                for (int step = 0; step < result->path_len; step++){
-                    IPCMessage msg;
-                    msg.pid = getpid();
-                    msg.current_node = result->path[step];
-                    msg.next_node = (step +1  < result->path_len) ? result->path[step + 1] : -1;
-                    msg.finished = false;
+                for (int step = 0; step < result->path_len; step++) {
+    int node = result->path[step];
+    int next = (step + 1 < result->path_len) ? result->path[step + 1] : -1;
 
-                    ipc_send(write_fd, &msg);
-                    usleep(1400000); /* 1.4 s per node */
-                }
+    bool locked = node_try_lock(node);
 
-                IPCMessage done;
-                done.pid = getpid();
-                done.current_node = travelers[i].dst;
-                done.next_node = -1;
-                done.finished = true;
-                ipc_send(write_fd, &done);
+    if (!locked) {
+        IPCMessage waiting_msg;
+        waiting_msg.pid = getpid();
+        waiting_msg.current_node = node;
+        waiting_msg.next_node = next;
+        waiting_msg.waiting_for_node = true;
+        waiting_msg.blocked_at_node = node;
+        waiting_msg.finished = false;
+
+        ipc_send(write_fd, &waiting_msg);
+
+        node_lock(node);
+    }
+
+    IPCMessage msg;
+    msg.pid = getpid();
+    msg.current_node = node;
+    msg.next_node = next;
+    msg.waiting_for_node = false;
+    msg.blocked_at_node = -1;
+    msg.finished = false;
+
+    ipc_send(write_fd, &msg);
+
+    sleep(1);
+
+    node_unlock(node);
+
+    if (next != -1) {
+        usleep(400000);
+    }
+}
+
+               IPCMessage done;
+done.pid = getpid();
+done.current_node = travelers[i].dst;
+done.next_node = -1;
+done.waiting_for_node = false;
+done.blocked_at_node = -1;
+done.finished = true;
+
+ipc_send(write_fd, &done);
 
                 free_path_result(result);
                 close(write_fd);
@@ -112,5 +148,6 @@ void spawn_travelers(Traveler* travelers, int n) {
         for (int i = 0; i < n; i++){
             close(pipe_fds[i][1]);
         }
+        sync_cleanup();
 
     }
