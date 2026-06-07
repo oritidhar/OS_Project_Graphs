@@ -1,0 +1,11 @@
+# M6 edge case: single traveler, no contention
+# Expected: no waiting messages, traveler finishes cleanly
+5 4
+0 1 1
+1 2 1
+2 3 1
+3 4 1
+
+# travelers
+1
+0 4
