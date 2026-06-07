@@ -16,8 +16,11 @@ typedef struct {
     bool is_playing;
     bool waiting;
     bool finished;
+    bool waiting_for_node;
 
     int current_edge_index;
+
+    int blocked_at_node;
 
     int current_node;
     int next_node;

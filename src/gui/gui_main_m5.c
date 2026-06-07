@@ -55,22 +55,58 @@ static void print_ipc_log(const IPCMessage* msg) {
 }
 
 static void apply_ipc_message(Traveler* traveler, const IPCMessage* msg) {
-    traveler->anim.current_node  = msg->current_node;
+    //save the prev state of the traveler to see time of changing
+    bool was_waiting = traveler->anim.waiting_for_node; 
+    int prev_blocked_node = traveler->anim.blocked_at_node;
+
+    //taking care of waiting when node is taken
+    if(msg->waiting_for_node){
+        if(!was_waiting || prev_blocked_node != msg->blocked_at_node){
+            //the traveler bloked for the first time or he waited but for a differnte node
+            printf("[PID=%d] waiting for node %d\n", msg->pid, msg->blocked_at_node);
+            fflush(stdout);
+        }
+        //update the travelers waiting situation
+        traveler->anim.waiting_for_node = true;
+        traveler->anim.blocked_at_node = msg->blocked_at_node;
+        return; //traveler still waiting
+    }
+
+    //if we got false
+    //the traveler was bloked on curr node last time and now trying to enter
+    if(was_waiting && prev_blocked_node == msg->current_node){
+        printf("[PID=%d] entered node %d | waited\n", msg->pid, msg->current_node);
+        fflush(stdout);
+    }
+    //the node is empty
+    if(traveler->anim.current_node && prev_blocked_node != msg->current_node){
+        printf("[PID=%d] entered node %d\n", msg->pid, msg->current_node);
+        fflush(stdout);
+    }
+
+    //the traveler enter the node
+    traveler->anim.waiting_for_node = false;
+    traveler->anim.blocked_at_node = -1;
+
+    //update animation location
+    traveler->anim.current_node = msg->current_node;
     traveler->anim.edge_progress = 0.0f;
     traveler->anim.waiting       = false;
     traveler->anim.is_playing    = true;
 
-    if (msg->finished) {
-        traveler->anim.next_node  = msg->current_node;
-        traveler->anim.finished   = true;
-        traveler->anim.is_playing = false;
+    if(msg->finished){
+        traveler->anim.next_node = msg->current_node;
+        traveler->anim.finished = true;
+        traveler->anim.is_playing    = false;
+        printf("[PID=%d] finished\n", msg->pid);
+        fflush(stdout);
         return;
     }
+    //not fhinised
+    traveler->anim.finished = false;
+    traveler->anim.next_node = (msg->next_node == -1) ? msg->current_node : msg->next_node;
 
-    traveler->anim.finished  = false;
-    traveler->anim.next_node = (msg->next_node == -1)
-                               ? msg->current_node
-                               : msg->next_node;
+
 }
 
 static void poll_ipc_messages(Traveler* travelers, int count, int (*pipe_fds)[2]) {
@@ -79,7 +115,6 @@ static void poll_ipc_messages(Traveler* travelers, int count, int (*pipe_fds)[2]
         while (ipc_recv(pipe_fds[i][0], &msg) == 1) {
             int idx = find_traveler_by_pid(travelers, count, msg.pid);
             if (idx >= 0) apply_ipc_message(&travelers[idx], &msg);
-            print_ipc_log(&msg);
         }
     }
 }
@@ -125,6 +160,8 @@ static void reset_travelers_anim(Traveler* travelers, int count) {
         travelers[i].anim.edge_progress   = 0.0f;
         travelers[i].anim.edge_timer      = 0.0f;
         travelers[i].anim.wait_timer      = 0.0f;
+        travelers[i].anim.waiting_for_node    = false;
+        travelers[i].anim.blocked_at_node     = -1;
     }
 }
 
