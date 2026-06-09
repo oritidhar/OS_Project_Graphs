@@ -73,13 +73,13 @@ static void apply_ipc_message(Traveler* traveler, const IPCMessage* msg) {
     }
 
     //if we got false
-    //the traveler was bloked on curr node last time and now trying to enter
+    //the traveler was blocked on this node and now enters it
     if(was_waiting && prev_blocked_node == msg->current_node){
         printf("[PID=%d] entered node %d | waited\n", msg->pid, msg->current_node);
         fflush(stdout);
     }
-    //the node is empty
-    if(traveler->anim.current_node && prev_blocked_node != msg->current_node){
+    //normal entry: traveler was not waiting, and this is not the finished sentinel
+    if(!was_waiting && !msg->finished){
         printf("[PID=%d] entered node %d\n", msg->pid, msg->current_node);
         fflush(stdout);
     }
@@ -296,6 +296,7 @@ int main(int argc, char* argv[]) {
         ClearBackground((Color){ 248, 250, 252, 255 });
 
         draw_static_graph(graph, &layout, argv[1], -1, -1);
+        draw_locked_nodes(travelers, traveler_count, layout.positions);
         draw_all_travelers(travelers, traveler_count, layout.positions);
         draw_travelers_legend(travelers, traveler_count);
 

@@ -1,0 +1,13 @@
+# M6 direct conflict: 2 travelers, identical src->dst
+# Both must traverse 0->1->2->3->4, maximum per-node contention
+# Expected: second traveler waits at every node the first occupies
+5 4
+0 1 1
+1 2 1
+2 3 1
+3 4 1
+
+# travelers
+2
+0 4
+0 4

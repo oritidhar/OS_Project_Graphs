@@ -1,0 +1,18 @@
+# M6 edge case: 4 travelers all start at node 0 (immediate contention at start)
+# Destinations staggered so paths diverge after the shared prefix
+# Expected: only one traveler in node 0 at a time
+8 7
+0 1 1
+1 2 1
+2 3 1
+3 4 1
+4 5 1
+5 6 1
+6 7 1
+
+# travelers
+4
+0 7
+0 5
+0 3
+0 1
