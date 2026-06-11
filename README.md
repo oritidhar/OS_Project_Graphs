@@ -128,10 +128,48 @@ cd build
 rm -rf *
 cmake ..
 make sim_m5
+```
 ---
 
-## Project Structure
+
+### Milestone 6
+
+## Overview
+In this milestone, we implemented a node mutual exclusion mechanism. No more than one passenger (process) can occupy a graph node at any given time. Passengers arriving at an occupied node wait outside and enter sequentially.
+
+## Architecture & System Design
+* **Node Synchronization:** Managed via critical sections at the node level.
+* **Telemetry & IPC Updates:** Extended `IPCMessage` with `waiting_for_node` and `blocked_at_node` flags to notify the parent process.
+* **GUI Visualization:** Upgraded Raylib to render occupied nodes (enlarged with a lock icon) and waiting passengers in a structured queue using positional offsets.
+
+### Why POSIX Semaphores over Mutexes? (Design Rationale)
+1. **Cross-Process Synchronization:** Travelers run as separate processes (`fork()`) with independent memory. Standard `pthread_mutex` cannot cross process boundaries, whereas POSIX Named Semaphores (`sem_open`) operate at the OS kernel level.
+2. **Deadlock Prevention:** Passengers only request **one lock at a time** (the next hop) and release the previous one immediately, mathematically eliminating circular wait conditions.
+3. **Starvation Prevention:** Backed by Linux's kernel-level FIFO wait queue for blocked semaphores, ensuring fair, first-come-first-served entry.
+4. **Clean Resource Lifecycle:** The parent process ensures proper cleanup by invoking `sem_close()` and `sem_unlink()` during simulation teardown to prevent kernel leaks.
+
+---
+
+## Test Samples (`assets/samples/`)
+1. `test_m6_collision.txt` – Direct Contention (The Train Effect). Identical paths; verified travelers trail exactly 1 node behind each other.
+2. `test_m6_degenerate.txt` – Edge case where `src == dst`, locking a single node and forcing cross-traffic to wait outside.
+3. `test_m6_load.txt` – Heavy stress test featuring a complex 15-node graph forcing 6 concurrent travelers through two central bottlenecks (nodes 5 and 7).
+
+---
+
+## Compilation & Execution
+
+### 1. Build the Project
+Navigate to the build directory, clear cache, and compile the target:
+```bash
+cd build
+rm -rf *
+cmake ..
+make sim_m6
 ```
+
+## Project Structure
+```bash
 src/core/   – graph representation, Dijkstra, min-heap
 src/io/     – file parsing and input validation
 src/gui/    – raylib rendering, layout, arrow drawing
