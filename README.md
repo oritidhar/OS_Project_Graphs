@@ -52,6 +52,26 @@ make milestone4
 ./sim tests/milestone4/test_m4.txt
 ```
 
+### Milestone 5 – Autonomous IPC travelers
+```bash
+make milestone5
+./sim <input_file>
+```
+Example:
+```bash
+./sim assets/samples/test_m5.txt
+```
+
+### Milestone 6 – Node mutual exclusion
+```bash
+make milestone6
+./sim <input_file>
+```
+Example:
+```bash
+./sim assets/samples/test_m6_two_conflict.txt
+```
+
 ### Clean all build artifacts
 ```bash
 make clean
@@ -151,9 +171,12 @@ In this milestone, we implemented a node mutual exclusion mechanism. No more tha
 ---
 
 ## Test Samples (`assets/samples/`)
-1. `test_m6_collision.txt` – Direct Contention (The Train Effect). Identical paths; verified travelers trail exactly 1 node behind each other.
-2. `test_m6_degenerate.txt` – Edge case where `src == dst`, locking a single node and forcing cross-traffic to wait outside.
-3. `test_m6_load.txt` – Heavy stress test featuring a complex 15-node graph forcing 6 concurrent travelers through two central bottlenecks (nodes 5 and 7).
+1. `test_m6_single.txt` – Single traveler baseline (no contention).
+2. `test_m6_two_conflict.txt` – Direct contention (The Train Effect). Two travelers, identical path; each trails exactly 1 node behind the other.
+3. `test_m6_src_eq_dst.txt` – Edge case where `src == dst` (path length 1), locking a single node and forcing cross-traffic to wait outside.
+4. `test_m6_same_start.txt` – 4 travelers all starting at the same node.
+5. `test_m6_chain.txt` – 4 travelers with chain-staggered, converging paths.
+6. `test_m6_complex.txt` – Heavy stress test: 6 concurrent travelers through two central bottlenecks (nodes 5 and 7).
 
 ---
 

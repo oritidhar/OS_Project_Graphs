@@ -33,6 +33,14 @@ add_executable(dijkstra
     src/io/file_parser.c
 )
 
+# file_parser.c transitively includes traveler.h -> raylib.h for the shared
+# parser used by later milestones. Link raylib so the CLI build gets raylib's
+# include path; the dijkstra binary never opens a window, so this stays headless.
+target_link_libraries(dijkstra
+    raylib
+    m
+)
+
 # Milestone 2 - Static GUI
 add_executable(sim_static
     src/gui/gui_main_static.c
@@ -88,6 +96,7 @@ add_executable(sim_m4
     src/core/animator.c
     src/core/process_mgr.c
     src/core/ipc.c
+    src/core/sync.c
     src/gui/layout.c
     src/gui/renderer.c
     src/gui/arrow_utils.c
@@ -109,6 +118,7 @@ add_executable(sim_m5
     src/core/animator.c
     src/core/process_mgr.c
     src/core/ipc.c
+    src/core/sync.c
     src/gui/layout.c
     src/gui/renderer.c
     src/gui/arrow_utils.c
