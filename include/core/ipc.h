@@ -6,6 +6,7 @@
 
 typedef struct {
     pid_t pid;
+    double arrival_time;
     int   current_node;
     int   next_node;    /* -1 when traveler just reached destination */
     bool  finished;     /* true on the final "I'm done" message */
