@@ -141,6 +141,7 @@ add_executable(sim_m6
     src/core/process_mgr.c
     src/core/ipc.c
     src/core/sync.c
+    src/core/scheduler_fcfs.c
     src/gui/layout.c
     src/gui/renderer.c
     src/gui/arrow_utils.c
