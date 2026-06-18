@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <sys/time.h>
+#include <string.h>
 
 #include "raylib.h"
 #include "io/file_parser.h"
@@ -14,6 +16,7 @@
 #include "gui/renderer.h"
 #include "gui/layout.h"
 #include "gui/draw_entity.h"
+#include "core/scheduler.h"
 
 #define SCREEN_WIDTH        1100
 #define SCREEN_HEIGHT       800
@@ -62,6 +65,8 @@ static void apply_ipc_message(Traveler* traveler, const IPCMessage* msg) {
     //taking care of waiting when node is taken
     if(msg->waiting_for_node){
         if(!was_waiting || prev_blocked_node != msg->blocked_at_node){
+
+            gettimeofday(&traveler->anim.wait_start_time, NULL);
             //the traveler bloked for the first time or he waited but for a differnte node
             printf("[PID=%d] waiting for node %d\n", msg->pid, msg->blocked_at_node);
             fflush(stdout);
@@ -75,8 +80,14 @@ static void apply_ipc_message(Traveler* traveler, const IPCMessage* msg) {
     //if we got false
     //the traveler was blocked on this node and now enters it
     if(was_waiting && prev_blocked_node == msg->current_node){
-        printf("[PID=%d] entered node %d | waited\n", msg->pid, msg->current_node);
+        struct timeval end_time;
+        gettimeofday(&end_time, NULL);
+
+        double waiting_time = (end_time.tv_sec - traveler->anim.wait_start_time.tv_sec) + (end_time.tv_usec - traveler->anim.wait_start_time.tv_usec) / 1000000.0;    
+        
+        printf("[PID=%d] entered node %d | waited %.6f seconds\n", msg->pid, msg->current_node, waiting_time);
         fflush(stdout);
+        gettimeofday(&end_time, NULL);
     }
     //normal entry: traveler was not waiting, and this is not the finished sentinel
     if(!was_waiting && !msg->finished){
@@ -229,15 +240,46 @@ static bool draw_button(Rectangle b, const char* label, Color bg) {
 /* ── main ───────────────────────────────────────────────────────────────── */
 
 int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <input_file>\n", argv[0]);
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <input_file> [-schd fcfs|sjf]\n", argv[0]);
         return 1;
     }
+
+    char* input_file = NULL;
+    SchedulerType selected_scheduler = FCFS; 
+
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-schd") == 0) {
+            if (i + 1 < argc) {
+                if (strcmp(argv[i + 1], "fcfs") == 0) {
+                    selected_scheduler = FCFS;
+                } else if (strcmp(argv[i + 1], "sjf") == 0) {
+                    selected_scheduler = SJF;
+                } else {
+                    fprintf(stderr, "Error: Unknown scheduler '%s'. Use fcfs or sjf.\n", argv[i + 1]);
+                    return 1;
+                }
+                i++; 
+            } else {
+                fprintf(stderr, "Error: Missing value for -schd\n");
+                return 1;
+            }
+        } else {
+            input_file = argv[i]; 
+        }
+    }
+
+    if (input_file == NULL) {
+        fprintf(stderr, "Error: Missing input file path.\n");
+        return 1;
+    }
+
+    scheduler_init(selected_scheduler);
 
     Traveler* travelers    = NULL;
     int       traveler_count = 0;
 
-    Graph* graph = parseGraphWithTravelers(argv[1], &travelers, &traveler_count);
+    Graph* graph = parseGraphWithTravelers(input_file, &travelers, &traveler_count);
     if (!graph) return 1;
 
     if (traveler_count <= 0 || traveler_count > MAX_TRAVELERS) {
@@ -295,7 +337,7 @@ int main(int argc, char* argv[]) {
         BeginDrawing();
         ClearBackground((Color){ 248, 250, 252, 255 });
 
-        draw_static_graph(graph, &layout, argv[1], -1, -1);
+        draw_static_graph(graph, &layout, input_file, -1, -1);
         draw_locked_nodes(travelers, traveler_count, layout.positions);
         draw_all_travelers(travelers, traveler_count, layout.positions);
         draw_travelers_legend(travelers, traveler_count);
