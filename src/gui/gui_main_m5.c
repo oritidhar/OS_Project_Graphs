@@ -271,11 +271,13 @@ static void draw_scheduler_status(void) {
 
 static void draw_node_waiting_counts(Graph* graph, const NodeLayout* layout) {
     for (int i = 0; i < graph->numVertices; i++) {
+        int node_id = i; /* graph/layout indices are the scheduler's 0-based node IDs */
+        int waiting = scheduler_waiting_count(node_id);
         char label[32];
-        snprintf(label, sizeof(label), "Waiting: x%d", scheduler_waiting_count(i));
+        snprintf(label, sizeof(label), "Waiting: x%d", waiting);
         DrawText(label,
-                 (int)layout->positions[i].x + 30,
-                 (int)layout->positions[i].y + 18,
+                 (int)layout->positions[node_id].x + 30,
+                 (int)layout->positions[node_id].y + 18,
                  14,
                  DARKGRAY);
     }
