@@ -22,7 +22,10 @@
 #define SCREEN_WIDTH        1100
 #define SCREEN_HEIGHT       800
 #define MAX_TRAVELERS       32
+#define MAX_TRACKED_NODES   1024
 #define IPC_EDGE_ANIMATION_TIME 1.4f
+
+static bool node_occupied[MAX_TRACKED_NODES];
 
 typedef enum {
     SIM_IDLE,     /* button: "Start"   */
@@ -63,28 +66,55 @@ static void apply_ipc_message(Traveler* traveler, const IPCMessage* msg) {
     bool was_waiting = traveler->anim.waiting_for_node; 
     int prev_blocked_node = traveler->anim.blocked_at_node;
 
-    //taking care of waiting when node is taken
-    if(msg->waiting_for_node){
-        if(!was_waiting || prev_blocked_node != msg->blocked_at_node){
+    if (msg->waiting_for_node) {
+        int node = msg->blocked_at_node;
 
-            gettimeofday(&traveler->anim.wait_start_time, NULL);
-            //the traveler bloked for the first time or he waited but for a differnte node
-            printf("[PID=%d] waiting for node %d\n", msg->pid, msg->blocked_at_node);
+        if (node >= 0 && node < MAX_TRACKED_NODES && !node_occupied[node]) {
+            node_occupied[node] = true;
+            printf("[SCHED] next node=%d selected pid=%d waiting_count=%d\n",
+                   node, (int)msg->pid, scheduler_waiting_count(node));
             fflush(stdout);
-            scheduler_enqueue(msg->blocked_at_node, *traveler);
+            kill(msg->pid, SIGUSR1);
+            return;
         }
-        //update the travelers waiting situation
+
+        gettimeofday(&traveler->anim.wait_start_time, NULL);
+        printf("[PID=%d] waiting for node %d\n", msg->pid, node);
+        fflush(stdout);
+        scheduler_enqueue_with_remaining(node, *traveler, msg->path_remaining);
         traveler->anim.waiting_for_node = true;
-        traveler->anim.blocked_at_node = msg->blocked_at_node;
-        return; //traveler still waiting
+        traveler->anim.blocked_at_node = node;
+        return;
     }
 
-    //if we got false
+    if (!msg->finished && msg->blocked_at_node >= 0) {
+        int node = msg->blocked_at_node;
+        if (node < 0 || node >= MAX_TRACKED_NODES) {
+            return;
+        }
+
+        node_occupied[node] = false;
+        pid_t selected = scheduler_next(node);
+        if (selected > 0) {
+            node_occupied[node] = true;
+            kill(selected, SIGUSR1);
+        }
+        return;
+    }
+
+    if (msg->finished) {
+        traveler->anim.next_node = msg->current_node;
+        traveler->anim.finished = true;
+        traveler->anim.is_playing = false;
+        printf("[PID=%d] finished\n", msg->pid);
+        fflush(stdout);
+        return;
+    }
+
     //the traveler was blocked on this node and now enters it
     if(was_waiting && prev_blocked_node == msg->current_node){
         struct timeval end_time;
         gettimeofday(&end_time, NULL);
-        scheduler_next(msg->current_node);
 
         double waiting_time = (end_time.tv_sec - traveler->anim.wait_start_time.tv_sec) + (end_time.tv_usec - traveler->anim.wait_start_time.tv_usec) / 1000000.0;    
         
@@ -108,15 +138,6 @@ static void apply_ipc_message(Traveler* traveler, const IPCMessage* msg) {
     traveler->anim.waiting       = false;
     traveler->anim.is_playing    = true;
 
-    if(msg->finished){
-        traveler->anim.next_node = msg->current_node;
-        traveler->anim.finished = true;
-        traveler->anim.is_playing    = false;
-        printf("[PID=%d] finished\n", msg->pid);
-        fflush(stdout);
-        return;
-    }
-    //not fhinised
     traveler->anim.finished = false;
     traveler->anim.next_node = (msg->next_node == -1) ? msg->current_node : msg->next_node;
 
@@ -184,6 +205,8 @@ static void reset_travelers_anim(Traveler* travelers, int count) {
 static SimState do_start(Traveler* travelers, int count,
                          int (*pipe_fds)[2], Graph* graph) {
     reset_travelers_anim(travelers, count);
+    scheduler_reset();
+    memset(node_occupied, 0, sizeof(node_occupied));
     if (ipc_open_pipes(pipe_fds, count) != 0) return SIM_IDLE;
     spawn_travelers_ipc(travelers, count, pipe_fds, graph);
     return SIM_RUNNING;

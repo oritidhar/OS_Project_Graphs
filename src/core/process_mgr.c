@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <sys/time.h>
 #include "core/process_mgr.h"
 #include "core/ipc.h"
 #include "core/dijkstra.h"
@@ -87,54 +88,66 @@ void spawn_travelers(Traveler* travelers, int n) {
                     exit(EXIT_FAILURE);
                 }
 
+                sigset_t grant_set;
+                sigemptyset(&grant_set);
+                sigaddset(&grant_set, SIGUSR1);
+                sigprocmask(SIG_BLOCK, &grant_set, NULL);
+
                 for (int step = 0; step < result->path_len; step++) {
-    int node = result->path[step];
-    int next = (step + 1 < result->path_len) ? result->path[step + 1] : -1;
+                    int node = result->path[step];
+                    int next = (step + 1 < result->path_len) ? result->path[step + 1] : -1;
+                    struct timeval arrival;
+                    gettimeofday(&arrival, NULL);
 
-    bool locked = node_try_lock(node);
+                    IPCMessage request = {0};
+                    request.pid = getpid();
+                    request.arrival_time =
+                        (double)arrival.tv_sec + (double)arrival.tv_usec / 1000000.0;
+                    request.path_remaining = result->path_len - step;
+                    request.current_node = node;
+                    request.next_node = next;
+                    request.waiting_for_node = true;
+                    request.blocked_at_node = node;
+                    request.finished = false;
+                    ipc_send(write_fd, &request);
 
-    if (!locked) {
-        IPCMessage waiting_msg;
-        waiting_msg.pid = getpid();
-        waiting_msg.current_node = node;
-        waiting_msg.next_node = next;
-        waiting_msg.waiting_for_node = true;
-        waiting_msg.blocked_at_node = node;
-        waiting_msg.finished = false;
+                    int grant_signal;
+                    sigwait(&grant_set, &grant_signal);
+                    node_lock(node);
 
-        ipc_send(write_fd, &waiting_msg);
+                    IPCMessage entered = {0};
+                    entered.pid = getpid();
+                    entered.path_remaining = result->path_len - step;
+                    entered.current_node = node;
+                    entered.next_node = next;
+                    entered.waiting_for_node = false;
+                    entered.blocked_at_node = -1;
+                    entered.finished = false;
+                    ipc_send(write_fd, &entered);
 
-        node_lock(node);
-    }
+                    sleep(1);
+                    node_unlock(node);
 
-    IPCMessage msg;
-    msg.pid = getpid();
-    msg.current_node = node;
-    msg.next_node = next;
-    msg.waiting_for_node = false;
-    msg.blocked_at_node = -1;
-    msg.finished = false;
+                    IPCMessage released = {0};
+                    released.pid = getpid();
+                    released.current_node = node;
+                    released.next_node = next;
+                    released.blocked_at_node = node;
+                    ipc_send(write_fd, &released);
 
-    ipc_send(write_fd, &msg);
+                    if (next != -1) {
+                        usleep(400000);
+                    }
+                }
 
-    sleep(1);
-
-    node_unlock(node);
-
-    if (next != -1) {
-        usleep(400000);
-    }
-}
-
-               IPCMessage done;
-done.pid = getpid();
-done.current_node = travelers[i].dst;
-done.next_node = -1;
-done.waiting_for_node = false;
-done.blocked_at_node = -1;
-done.finished = true;
-
-ipc_send(write_fd, &done);
+                IPCMessage done = {0};
+                done.pid = getpid();
+                done.current_node = travelers[i].dst;
+                done.next_node = -1;
+                done.waiting_for_node = false;
+                done.blocked_at_node = -1;
+                done.finished = true;
+                ipc_send(write_fd, &done);
 
                 free_path_result(result);
                 close(write_fd);

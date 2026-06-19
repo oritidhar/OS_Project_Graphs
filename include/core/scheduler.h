@@ -9,7 +9,9 @@ typedef Traveler TravelerInfo;
 typedef enum { FCFS, SJF } SchedulerType;
 
 void scheduler_init(SchedulerType type);
+void scheduler_reset(void);
 void scheduler_enqueue(int node_id, TravelerInfo t);
+void scheduler_enqueue_with_remaining(int node_id, TravelerInfo t, int path_remaining);
 pid_t scheduler_next(int node_id);
 const char* scheduler_get_name(void);
 int scheduler_waiting_count(int node_id);
