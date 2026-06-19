@@ -94,3 +94,15 @@ pid_t sjf_next(int node_id) {
     free(node);
     return pid;
 }
+
+int sjf_waiting_count(int node_id) {
+    if (!is_valid_node(node_id)) {
+        return 0;
+    }
+
+    int count = 0;
+    for (SJFQueueNode* node = queue_heads[node_id]; node != NULL; node = node->next) {
+        count++;
+    }
+    return count;
+}
