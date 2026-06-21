@@ -119,6 +119,8 @@ add_executable(sim_m5
     src/core/process_mgr.c
     src/core/ipc.c
     src/core/sync.c
+    src/core/scheduler_fcfs.c
+    src/core/scheduler_sjf.c
     src/gui/layout.c
     src/gui/renderer.c
     src/gui/arrow_utils.c
@@ -142,6 +144,7 @@ add_executable(sim_m6
     src/core/ipc.c
     src/core/sync.c
     src/core/scheduler_fcfs.c
+    src/core/scheduler_sjf.c
     src/gui/layout.c
     src/gui/renderer.c
     src/gui/arrow_utils.c
@@ -150,5 +153,29 @@ add_executable(sim_m6
 )
 
 target_link_libraries(sim_m6
+    raylib m pthread dl rt X11
+)
+
+# Milestone 7 - selectable FCFS/SJF scheduler display and demo support
+add_executable(sim_m7
+    src/gui/gui_main_m5.c
+    src/core/graph.c
+    src/core/dijkstra.c
+    src/core/minHeap.c
+    src/io/file_parser.c
+    src/core/animator.c
+    src/core/process_mgr.c
+    src/core/ipc.c
+    src/core/sync.c
+    src/core/scheduler_fcfs.c
+    src/core/scheduler_sjf.c
+    src/gui/layout.c
+    src/gui/renderer.c
+    src/gui/arrow_utils.c
+    src/gui/draw_entity.c
+    src/gui/ui_controls.c
+)
+
+target_link_libraries(sim_m7
     raylib m pthread dl rt X11
 )

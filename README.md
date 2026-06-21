@@ -72,6 +72,13 @@ Example:
 ./sim assets/samples/test_m6_two_conflict.txt
 ```
 
+### Milestone 7 - Scheduling Algorithms
+```bash
+make milestone7
+./sim -schd fcfs demo_schedulers.txt
+./sim -schd sjf demo_schedulers.txt
+```
+
 ### Clean all build artifacts
 ```bash
 make clean
@@ -190,6 +197,47 @@ rm -rf *
 cmake ..
 make sim_m6
 ```
+
+### Milestone 7 - Scheduling Algorithms
+
+## Overview
+Milestone 7 adds selectable scheduling for travelers waiting at graph nodes.
+The selected scheduler is shown in the GUI as `Scheduler: FCFS` or
+`Scheduler: SJF`, and each node shows its current waiting count as
+`Waiting: x0`, `Waiting: x1`, and so on.
+
+## Compilation & Execution
+```bash
+make milestone7
+./sim -schd fcfs demo_schedulers.txt
+./sim -schd sjf demo_schedulers.txt
+```
+
+## Algorithms
+FCFS - first traveler that arrives to a node enters first.
+
+SJF - traveler with the shortest remaining path enters first.
+
+## Demo Input
+`demo_schedulers.txt` contains three travelers starting at the same node:
+short, medium, and long routes. The long traveler appears first in the input,
+so FCFS can let the long traveler wait ahead of shorter travelers, while SJF
+prioritizes the shorter remaining path.
+
+## Behavior Comparison
+| Algorithm | Behavior | Expected result |
+| --- | --- | --- |
+| FCFS | Arrival order | The long traveler can enter before the short traveler if it arrived first |
+| SJF | `path_remaining` | The short traveler gets priority at the node |
+
+## Waiting Time Comparison
+Fill this table after running on Linux and reading the `waited ... seconds`
+lines printed by the simulation.
+
+| Algorithm | Short traveler wait | Medium traveler wait | Long traveler wait |
+| --- | --- | --- | --- |
+| FCFS | To be filled after Linux run | To be filled after Linux run | To be filled after Linux run |
+| SJF | To be filled after Linux run | To be filled after Linux run | To be filled after Linux run |
 
 ## Project Structure
 ```bash

@@ -9,6 +9,7 @@
 
 #include "raylib.h"
 #include "io/file_parser.h"
+#include "core/dijkstra.h"
 #include "core/graph.h"
 #include "core/traveler.h"
 #include "core/process_mgr.h"
@@ -21,7 +22,10 @@
 #define SCREEN_WIDTH        1100
 #define SCREEN_HEIGHT       800
 #define MAX_TRAVELERS       32
+#define MAX_TRACKED_NODES   1024
 #define IPC_EDGE_ANIMATION_TIME 1.4f
+
+static bool node_occupied[MAX_TRACKED_NODES];
 
 typedef enum {
     SIM_IDLE,     /* button: "Start"   */
@@ -62,22 +66,51 @@ static void apply_ipc_message(Traveler* traveler, const IPCMessage* msg) {
     bool was_waiting = traveler->anim.waiting_for_node; 
     int prev_blocked_node = traveler->anim.blocked_at_node;
 
-    //taking care of waiting when node is taken
-    if(msg->waiting_for_node){
-        if(!was_waiting || prev_blocked_node != msg->blocked_at_node){
+    if (msg->waiting_for_node) {
+        int node = msg->blocked_at_node;
 
-            gettimeofday(&traveler->anim.wait_start_time, NULL);
-            //the traveler bloked for the first time or he waited but for a differnte node
-            printf("[PID=%d] waiting for node %d\n", msg->pid, msg->blocked_at_node);
+        if (node >= 0 && node < MAX_TRACKED_NODES && !node_occupied[node]) {
+            node_occupied[node] = true;
+            printf("[SCHED] next node=%d selected pid=%d waiting_count=%d\n",
+                   node, (int)msg->pid, scheduler_waiting_count(node));
             fflush(stdout);
+            kill(msg->pid, SIGUSR1);
+            return;
         }
-        //update the travelers waiting situation
+
+        gettimeofday(&traveler->anim.wait_start_time, NULL);
+        printf("[PID=%d] waiting for node %d\n", msg->pid, node);
+        fflush(stdout);
+        scheduler_enqueue_with_remaining(node, *traveler, msg->path_remaining);
         traveler->anim.waiting_for_node = true;
-        traveler->anim.blocked_at_node = msg->blocked_at_node;
-        return; //traveler still waiting
+        traveler->anim.blocked_at_node = node;
+        return;
     }
 
-    //if we got false
+    if (!msg->finished && msg->blocked_at_node >= 0) {
+        int node = msg->blocked_at_node;
+        if (node < 0 || node >= MAX_TRACKED_NODES) {
+            return;
+        }
+
+        node_occupied[node] = false;
+        pid_t selected = scheduler_next(node);
+        if (selected > 0) {
+            node_occupied[node] = true;
+            kill(selected, SIGUSR1);
+        }
+        return;
+    }
+
+    if (msg->finished) {
+        traveler->anim.next_node = msg->current_node;
+        traveler->anim.finished = true;
+        traveler->anim.is_playing = false;
+        printf("[PID=%d] finished\n", msg->pid);
+        fflush(stdout);
+        return;
+    }
+
     //the traveler was blocked on this node and now enters it
     if(was_waiting && prev_blocked_node == msg->current_node){
         struct timeval end_time;
@@ -105,15 +138,6 @@ static void apply_ipc_message(Traveler* traveler, const IPCMessage* msg) {
     traveler->anim.waiting       = false;
     traveler->anim.is_playing    = true;
 
-    if(msg->finished){
-        traveler->anim.next_node = msg->current_node;
-        traveler->anim.finished = true;
-        traveler->anim.is_playing    = false;
-        printf("[PID=%d] finished\n", msg->pid);
-        fflush(stdout);
-        return;
-    }
-    //not fhinised
     traveler->anim.finished = false;
     traveler->anim.next_node = (msg->next_node == -1) ? msg->current_node : msg->next_node;
 
@@ -181,6 +205,8 @@ static void reset_travelers_anim(Traveler* travelers, int count) {
 static SimState do_start(Traveler* travelers, int count,
                          int (*pipe_fds)[2], Graph* graph) {
     reset_travelers_anim(travelers, count);
+    scheduler_reset();
+    memset(node_occupied, 0, sizeof(node_occupied));
     if (ipc_open_pipes(pipe_fds, count) != 0) return SIM_IDLE;
     spawn_travelers_ipc(travelers, count, pipe_fds, graph);
     return SIM_RUNNING;
@@ -237,11 +263,31 @@ static bool draw_button(Rectangle b, const char* label, Color bg) {
     return clicked;
 }
 
+static void draw_scheduler_status(void) {
+    char label[64];
+    snprintf(label, sizeof(label), "Scheduler: %s", scheduler_get_name());
+    DrawText(label, 30, 88, 20, DARKBLUE);
+}
+
+static void draw_node_waiting_counts(Graph* graph, const NodeLayout* layout) {
+    for (int i = 0; i < graph->numVertices; i++) {
+        int node_id = i; /* graph/layout indices are the scheduler's 0-based node IDs */
+        int waiting = scheduler_waiting_count(node_id);
+        char label[32];
+        snprintf(label, sizeof(label), "Waiting: x%d", waiting);
+        DrawText(label,
+                 (int)layout->positions[node_id].x + 30,
+                 (int)layout->positions[node_id].y + 18,
+                 14,
+                 DARKGRAY);
+    }
+}
+
 /* ── main ───────────────────────────────────────────────────────────────── */
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <input_file> [-schd fcfs|sjf]\n", argv[0]);
+        fprintf(stderr, "Usage: %s -schd fcfs|sjf <input_file>\n", argv[0]);
         return 1;
     }
 
@@ -292,7 +338,7 @@ int main(int argc, char* argv[]) {
 
     for (int i = 0; i < traveler_count; i++) {
         travelers[i].color       = colors[i % colors_count];
-        travelers[i].path_result = NULL;
+        travelers[i].path_result = dijkstra_compute_path(graph, travelers[i].src, travelers[i].dst);
     }
 
     int pipe_fds[MAX_TRAVELERS][2];
@@ -303,7 +349,7 @@ int main(int argc, char* argv[]) {
 
     reset_travelers_anim(travelers, traveler_count);
 
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "OS Project - Milestone 5 IPC");
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "OS Project - Milestone 7 Scheduling");
     SetTargetFPS(60);
 
     NodeLayout layout = createCircularLayout(graph->numVertices,
@@ -338,6 +384,8 @@ int main(int argc, char* argv[]) {
         ClearBackground((Color){ 248, 250, 252, 255 });
 
         draw_static_graph(graph, &layout, input_file, -1, -1);
+        draw_scheduler_status();
+        draw_node_waiting_counts(graph, &layout);
         draw_locked_nodes(travelers, traveler_count, layout.positions);
         draw_all_travelers(travelers, traveler_count, layout.positions);
         draw_travelers_legend(travelers, traveler_count);
@@ -380,6 +428,9 @@ int main(int argc, char* argv[]) {
     close_pipe_read_ends(pipe_fds, traveler_count);
     freeNodeLayout(&layout);
     CloseWindow();
+    for (int i = 0; i < traveler_count; i++) {
+        free_path_result(travelers[i].path_result);
+    }
     free(travelers);
     freeGraph(graph);
     return 0;

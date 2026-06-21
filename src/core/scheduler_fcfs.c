@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include "core/scheduler.h"
 
@@ -10,6 +11,7 @@ typedef struct FCFSQueueNode {
 
 static FCFSQueueNode* queue_heads[FCFS_MAX_NODES];
 static FCFSQueueNode* queue_tails[FCFS_MAX_NODES];
+static SchedulerType current_scheduler = FCFS;
 
 static int is_valid_node(int node_id) {
     return node_id >= 0 && node_id < FCFS_MAX_NODES;
@@ -67,4 +69,84 @@ pid_t fcfs_next(int node_id) {
 
     free(node);
     return pid;
+}
+
+int fcfs_waiting_count(int node_id) {
+    if (!is_valid_node(node_id)) {
+        return 0;
+    }
+
+    int count = 0;
+    for (FCFSQueueNode* node = queue_heads[node_id]; node != NULL; node = node->next) {
+        count++;
+    }
+    return count;
+}
+
+static int path_remaining_for_node(const TravelerInfo* traveler, int node_id) {
+    if (traveler == NULL || traveler->path_result == NULL || traveler->path_result->path == NULL) {
+        return 0;
+    }
+
+    for (int i = 0; i < traveler->path_result->path_len; i++) {
+        if (traveler->path_result->path[i] == node_id) {
+            return traveler->path_result->path_len - i;
+        }
+    }
+
+    return traveler->path_result->path_len;
+}
+
+void scheduler_init(SchedulerType type) {
+    current_scheduler = type;
+    scheduler_reset();
+}
+
+void scheduler_reset(void) {
+    fcfs_init();
+    sjf_init();
+}
+
+void scheduler_enqueue(int node_id, TravelerInfo t) {
+    scheduler_enqueue_with_remaining(node_id, t, path_remaining_for_node(&t, node_id));
+}
+
+void scheduler_enqueue_with_remaining(int node_id, TravelerInfo t, int path_remaining) {
+    if (current_scheduler == SJF) {
+        sjf_enqueue(node_id, t, path_remaining);
+    } else {
+        fcfs_enqueue(node_id, t);
+    }
+
+    printf("[SCHED] type=%s enqueue node=%d pid=%d path_remaining=%d waiting_count=%d\n",
+           scheduler_get_name(), node_id, (int)t.pid, path_remaining,
+           scheduler_waiting_count(node_id));
+    fflush(stdout);
+}
+
+pid_t scheduler_next(int node_id) {
+    pid_t selected;
+
+    if (current_scheduler == SJF) {
+        selected = sjf_next(node_id);
+    } else {
+        selected = fcfs_next(node_id);
+    }
+
+    printf("[SCHED] next node=%d selected pid=%d waiting_count=%d\n",
+           node_id, (int)selected, scheduler_waiting_count(node_id));
+    fflush(stdout);
+    return selected;
+}
+
+const char* scheduler_get_name(void) {
+    return current_scheduler == SJF ? "SJF" : "FCFS";
+}
+
+int scheduler_waiting_count(int node_id) {
+    if (current_scheduler == SJF) {
+        return sjf_waiting_count(node_id);
+    }
+
+    return fcfs_waiting_count(node_id);
 }

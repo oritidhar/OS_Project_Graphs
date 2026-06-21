@@ -2,6 +2,7 @@
 #define ANIMATOR_H
 
 #include <stdbool.h>
+#include <sys/time.h>
 
 #define ANIMATOR_EDGE_STEP_TIME 0.3f
 #define ANIMATOR_NODE_WAIT_TIME 1.0f
@@ -28,6 +29,7 @@ typedef struct {
     float edge_progress; // 0.0 to 1.0
     float edge_timer;
     float wait_timer;
+    struct timeval wait_start_time;
 } AnimState;
 
 void animator_init(AnimState* state, PathResult* result);
