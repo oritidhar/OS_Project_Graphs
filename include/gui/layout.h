@@ -1,3 +1,10 @@
+/*
+ * layout.h — maps each graph vertex to a screen position.
+ *
+ * A NodeLayout owns a positions[] array (one Vector2 per vertex) produced by
+ * createCircularLayout(); free it with freeNodeLayout().
+ */
+
 #ifndef GUI_LAYOUT_H
 #define GUI_LAYOUT_H
 

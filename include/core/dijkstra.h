@@ -1,3 +1,12 @@
+/*
+ * dijkstra.h — shortest-path computation over a directed weighted Graph.
+ *
+ * Two entry points share the same core algorithm:
+ *   dijkstra()              prints the path + total weight (milestone 1 CLI).
+ *   dijkstra_compute_path() returns a PathResult the GUI animates (milestone 3+).
+ * Both treat an unreachable destination and the start == end case explicitly.
+ */
+
 #ifndef DIJKSTRA_H
 #define DIJKSTRA_H
 

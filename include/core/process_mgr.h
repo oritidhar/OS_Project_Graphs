@@ -1,3 +1,11 @@
+/*
+ * process_mgr.h — fork/wait management of traveler child processes.
+ *
+ * Milestone 4: the parent computes every path and the children only sleep.
+ * Milestone 5+: children compute their own paths and stream position updates
+ * back to the parent over per-child pipes (see ipc.h).
+ */
+
 #ifndef PROCESS_MGR_H
 #define PROCESS_MGR_H
 

@@ -93,3 +93,7 @@ main.exe
 dijkstra
 sim
 sim_static
+
+# Compiled test harness binaries
+tests/run_m6_tests
+tests/run_m7_tests

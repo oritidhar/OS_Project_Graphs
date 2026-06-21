@@ -1,3 +1,9 @@
+/*
+ * renderer.h — draws the static graph and the highlighted shortest path.
+ *
+ * Both functions must be called between BeginDrawing() and EndDrawing().
+ */
+
 #ifndef GUI_RENDERER_H
 #define GUI_RENDERER_H
 

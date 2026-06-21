@@ -1,0 +1,16 @@
+# M6 submission scenario: 3 travelers converge on bottleneck node 2
+# All three start at different nodes equidistant from node 2,
+# so they arrive at the bottleneck simultaneously.
+# Expected: one traveler holds node 2 while two others wait outside;
+#           they enter one by one, each staying 1 full second.
+5 4
+0 2 1
+1 2 1
+3 2 1
+2 4 1
+
+# travelers
+3
+0 4
+1 4
+3 4

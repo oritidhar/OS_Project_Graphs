@@ -1,3 +1,12 @@
+/*
+ * main.c — milestone 1 command-line entry point (./dijkstra <input_file>).
+ *
+ * Parses the graph + Dijkstra query from the input file, runs Dijkstra, prints
+ * the shortest path and total weight to stdout, then frees the graph.  All
+ * input validation and error messages come from parseGraph(); this file only
+ * checks the argument count and propagates the failure exit code.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "io/file_parser.h"

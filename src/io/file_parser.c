@@ -1,3 +1,14 @@
+/*
+ * file_parser.c — reads graph and traveler definitions from a text file.
+ *
+ * Blank lines and '#' comment lines are skipped everywhere (isCommentOrEmpty).
+ * parseGraph() reads "N M", then M "src dst weight" edges, then a trailing
+ * "src dst" Dijkstra query.  parseGraphWithTravelers() reuses the graph section
+ * and then reads a "travelers" section (a count followed by src dst pairs).
+ * Every malformed case — bad header, out-of-range index, negative weight — is
+ * reported to stderr and frees whatever was allocated before returning NULL.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

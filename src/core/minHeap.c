@@ -1,3 +1,10 @@
+/*
+ * minHeap.c — binary min-heap used as Dijkstra's priority queue.
+ *
+ * Nodes are ordered by `distance`.  The `pos[]` array maps each vertex to its
+ * current slot so decreaseKey() can locate and sift a vertex up in O(log n)
+ * after its tentative distance improves, without scanning the heap.
+ */
 
 #include   <stdlib.h>
 #include   <stdio.h>

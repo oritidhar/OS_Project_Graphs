@@ -1,3 +1,12 @@
+/*
+ * file_parser.h — reads graph and traveler definitions from an input file.
+ *
+ * parseGraph()              milestones 1-3: graph + a single Dijkstra query.
+ * parseGraphWithTravelers() milestones 4-7: graph + a "travelers" section
+ *                           (a count followed by src dst pairs).
+ * Both return NULL and print to stderr on malformed input.
+ */
+
 #ifndef FILE_PARSER_H
 #define FILE_PARSER_H
 

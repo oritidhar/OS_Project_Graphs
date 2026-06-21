@@ -1,3 +1,12 @@
+/*
+ * gui_main.c — milestone 3 entry point (./sim): single animated traveler.
+ *
+ * Loads the graph, computes one Dijkstra path, and runs the raylib loop:
+ * draws the static graph + highlighted path, animates one traveler along it
+ * (300 ms per edge hop, 1 s pause per intermediate node), and exposes a
+ * play/stop button.  Single-process — no fork/IPC yet (that starts at M4).
+ */
+
 #include <stdio.h>
 #include "raylib.h"
 #include "io/file_parser.h"

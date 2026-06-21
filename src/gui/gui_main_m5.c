@@ -1,3 +1,19 @@
+/*
+ * gui_main_m5.c — shared parent/GUI driver for milestones 5, 6 and 7 (./sim).
+ *
+ * Children are autonomous (see process_mgr.c): each computes its own path and
+ * streams IPCMessages — waiting / entered / released / finished — back over a
+ * private pipe.  The parent loop here:
+ *   • polls every pipe with ipc_recv() and updates each traveler's animation,
+ *   • M6: enforces one-traveler-per-node by granting node entry via SIGUSR1
+ *     only when the node is free, and renders waiting travelers distinctly,
+ *   • M7: when several travelers contend for a node, picks who to grant next
+ *     through the selected scheduler (-schd fcfs|sjf) and shows its name on
+ *     screen (scheduler_get_name()).
+ * The CLI accepts "-schd fcfs|sjf <input_file>"; an unknown scheduler, missing
+ * value, or missing/!openable file is reported to stderr before the window opens.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>

@@ -1,3 +1,10 @@
+/*
+ * minHeap.h — binary min-heap keyed by distance; Dijkstra's priority queue.
+ *
+ * pos[v] records each vertex's index in the heap so decreaseKey() can sift a
+ * vertex up in O(log n) without scanning the array.
+ */
+
 #ifndef MINHEAP_H
 #define MINHEAP_H
 

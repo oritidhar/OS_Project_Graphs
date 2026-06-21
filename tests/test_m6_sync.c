@@ -1,3 +1,4 @@
+
 /*
  * Headless M6 synchronization test harness.
  * No raylib dependency — links only graph/dijkstra/ipc/sync.
@@ -105,7 +106,11 @@ static void child_run(int write_fd, Graph* graph, int src, int dst) {
         int next = (step + 1 < result->path_len) ? result->path[step + 1] : -1;
 
         if (!node_try_lock(node)) {
-            IPCMessage wm = { getpid(), node, next, false, true, node };
+            /* Designated initializers: robust to IPCMessage field additions
+             * (arrival_time / path_remaining were added for the M7 schedulers). */
+            IPCMessage wm = { .pid = getpid(), .current_node = node, .next_node = next,
+                              .finished = false, .waiting_for_node = true,
+                              .blocked_at_node = node };
             ipc_send(write_fd, &wm);
             node_lock(node);
         }
@@ -113,7 +118,9 @@ static void child_run(int write_fd, Graph* graph, int src, int dst) {
         /* Under exclusive lock — increment shared occupancy counter */
         __atomic_fetch_add((int*)&occ_count[node], 1, __ATOMIC_SEQ_CST);
 
-        IPCMessage msg = { getpid(), node, next, false, false, -1 };
+        IPCMessage msg = { .pid = getpid(), .current_node = node, .next_node = next,
+                           .finished = false, .waiting_for_node = false,
+                           .blocked_at_node = -1 };
         ipc_send(write_fd, &msg);
 
         sleep(1);
@@ -124,7 +131,9 @@ static void child_run(int write_fd, Graph* graph, int src, int dst) {
         if (next != -1) usleep(400000);
     }
 
-    IPCMessage done = { getpid(), dst, -1, true, false, -1 };
+    IPCMessage done = { .pid = getpid(), .current_node = dst, .next_node = -1,
+                        .finished = true, .waiting_for_node = false,
+                        .blocked_at_node = -1 };
     ipc_send(write_fd, &done);
     free_path_result(result);
     close(write_fd);
@@ -138,7 +147,7 @@ static void on_alarm(int sig) { (void)sig; timed_out = 1; }
 
 /* ── single test runner ──────────────────────────────────────────── */
 
-static bool run_test(const char* label, const char* filepath, int timeout_secs) {
+static bool run_test(const char* label, const char* filepath, int timeout_secs, int min_waits) {
     printf("\n──────────────────────────────────────────\n");
     printf("TEST : %s\n", label);
     printf("FILE : %s\n", filepath);
@@ -281,7 +290,10 @@ static bool run_test(const char* label, const char* filepath, int timeout_secs) 
            waiting_msgs, entered_waited);
     if (timed_out) printf("  *** TIMEOUT after %d s ***\n", timeout_secs);
 
-    bool pass = mutual_ex_ok && all_done && !timed_out;
+    bool waits_ok = (min_waits == 0 || waiting_msgs >= min_waits);
+    printf("  Min waiting events : %s  (need %d, got %d)\n",
+           waits_ok ? "OK" : "FAIL", min_waits, waiting_msgs);
+    bool pass = mutual_ex_ok && all_done && !timed_out && waits_ok;
     printf("RESULT: %s\n", pass ? "PASS" : "FAIL");
 
     munmap((void*)occ_count, MAX_N * sizeof(int));
@@ -295,26 +307,33 @@ static bool run_test(const char* label, const char* filepath, int timeout_secs) 
 int main(void) {
     int pass = 0, total = 0;
 
-#define T(label, file, secs) \
-    do { total++; if (run_test(label, file, secs)) pass++; } while (0)
+    /* Unbuffered stdout so forked children do not inherit and re-flush the
+     * parent's pending buffer on exit (which duplicates lines in the log). */
+    setvbuf(stdout, NULL, _IONBF, 0);
+
+#define T(label, file, secs, waits) \
+    do { total++; if (run_test(label, file, secs, waits)) pass++; } while (0)
 
     T("Single traveler (baseline, no contention)",
-      "assets/samples/test_m6_single.txt",          10);
+      "assets/samples/test_m6_single.txt",          10,  0);
 
     T("Two travelers, identical path (maximum contention)",
-      "assets/samples/test_m6_two_conflict.txt",    25);
+      "assets/samples/test_m6_two_conflict.txt",    25,  1);
 
     T("src == dst edge case (path_len=1)",
-      "assets/samples/test_m6_src_eq_dst.txt",      15);
+      "assets/samples/test_m6_src_eq_dst.txt",      15,  0);
 
     T("4 travelers, all start at same node",
-      "assets/samples/test_m6_same_start.txt",      45);
+      "assets/samples/test_m6_same_start.txt",      45,  0);
 
     T("4 travelers, chain stagger (converging paths)",
-      "assets/samples/test_m6_chain.txt",           45);
+      "assets/samples/test_m6_chain.txt",           45,  0);
 
     T("6 travelers, double bottleneck at nodes 5 and 7",
-      "assets/samples/test_m6_complex.txt",        100);
+      "assets/samples/test_m6_complex.txt",        100,  0);
+
+    T("Submission scenario: 3 travelers wait for same bottleneck node",
+      "assets/samples/test_m6_three_wait.txt",      30,  2);
 
 #undef T
 

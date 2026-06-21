@@ -1,3 +1,7 @@
+/*
+ * arrow_utils.h — helpers for drawing directed edges and placing weight labels.
+ */
+
 #ifndef GUI_ARROW_UTILS_H
 #define GUI_ARROW_UTILS_H
 

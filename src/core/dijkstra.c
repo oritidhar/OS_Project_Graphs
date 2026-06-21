@@ -1,3 +1,13 @@
+/*
+ * dijkstra.c — single-source shortest path via a binary min-heap.
+ *
+ * run_dijkstra_core() fills distance[]/prev[] and stops as soon as the target
+ * is extracted.  Two public wrappers reuse it: dijkstra() prints the path and
+ * total weight for the CLI; dijkstra_compute_path() returns a heap-allocated
+ * PathResult (path + per-edge weights) for the GUI to animate.  start == end
+ * and unreachable destinations are handled as explicit special cases.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>

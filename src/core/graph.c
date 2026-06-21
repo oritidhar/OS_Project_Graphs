@@ -1,6 +1,15 @@
+/*
+ * graph.c — construction and teardown of the adjacency-list graph.
+ *
+ * addEdge() prepends a new Edge to adjList[src] (O(1) insertion), so each
+ * vertex's outgoing edges are stored newest-first.  Negative weights are
+ * rejected here because Dijkstra cannot handle them.  Allocation failures are
+ * fatal (exit(1)) since the program cannot proceed without the graph.
+ */
+
 #include "core/graph.h"
-#include <stdlib.h> 
-#include <stdio.h>     
+#include <stdlib.h>
+#include <stdio.h>
 
 // Function to create a graph with a given number of vertices
 Graph* createGraph(int vertices) {

@@ -1,3 +1,22 @@
+/*
+ * process_mgr.c — forking traveler children and their per-step protocol.
+ *
+ * Milestone 4 (spawn_travelers / wait_for_all_travelers): children just print
+ * "started" and pause(); the parent later SIGTERMs them all, then reaps them.
+ * Kill and wait are split into two loops so signalling one child never blocks
+ * on reaping an earlier one.
+ *
+ * Milestone 5-7 (spawn_travelers_ipc): each child computes its own path and,
+ * for every node on it, runs the request → grant → enter → release handshake:
+ *   1. sends a "waiting" IPCMessage (with arrival_time + path_remaining so the
+ *      parent's scheduler can order contenders),
+ *   2. blocks in sigwait() until the parent grants entry via SIGUSR1,
+ *   3. takes the node semaphore, sends "entered", holds the node for 1 s,
+ *   4. releases the lock and sends "released", then walks the edge (400 ms).
+ * SIGUSR1 is blocked up front so a grant that arrives before sigwait() is not
+ * lost.  A final "finished" message tells the parent the child is done.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>

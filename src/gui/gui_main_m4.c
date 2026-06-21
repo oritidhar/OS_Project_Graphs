@@ -1,3 +1,14 @@
+/*
+ * gui_main_m4.c — milestone 4 entry point (./sim): multiple travelers.
+ *
+ * The parent reads the traveler list, computes every traveler's path with
+ * Dijkstra, fork()s one child per traveler (children just print "started" and
+ * pause()), and animates all travelers concurrently, each in its own colour.
+ * When a traveler reaches its destination the parent SIGTERMs that child; it
+ * waits for all children before exiting.  Paths still come from the parent —
+ * children become autonomous only at M5.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>

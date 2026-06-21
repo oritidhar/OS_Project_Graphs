@@ -1,3 +1,11 @@
+/*
+ * graph.h — directed weighted graph as an array of adjacency lists.
+ *
+ * adjList[v] is a singly linked list of outgoing Edges from vertex v.  The
+ * graph is built once from the input file and shared read-only by Dijkstra and
+ * the renderer.  Release it with freeGraph().
+ */
+
 #ifndef GRAPH_H
 #define GRAPH_H
 

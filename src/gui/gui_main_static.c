@@ -1,3 +1,11 @@
+/*
+ * gui_main_static.c — milestone 2 entry point (./sim_static): static viewer.
+ *
+ * Loads the graph and draws it once per frame with no animation: nodes on a
+ * circular layout, directed weighted edges, and the Dijkstra query highlighted.
+ * The window stays open until ESC/close — this milestone is display-only.
+ */
+
 #include <stdio.h>
 #include "raylib.h"
 #include "io/file_parser.h"
