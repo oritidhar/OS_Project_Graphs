@@ -1,3 +1,14 @@
+/*
+ * renderer.c — static graph rendering: header, edges, nodes, path highlight.
+ *
+ * draw_static_graph() is called every frame; it draws everything that does not
+ * change while the simulation runs: the file header, all edges (including
+ * self-loops), and the node circles.
+ *
+ * draw_path_highlight() re-draws only the edges that belong to the Dijkstra
+ * shortest path in orange, layered on top of the grey static graph.
+ */
+
 #include <stdio.h>
 #include "raylib.h"
 #include "core/graph.h"
@@ -5,23 +16,26 @@
 #include "gui/arrow_utils.h"
 #include "gui/renderer.h"
 
-#define SCREEN_WIDTH 1100
-#define SCREEN_HEIGHT 800
-#define NODE_RADIUS 24.0f
+#define SCREEN_WIDTH    1100
+#define SCREEN_HEIGHT   800
+#define NODE_RADIUS     24.0f
 #define MAX_GUI_VERTICES 15
 
-static void drawCenteredText(const char* text, int centerX, int centerY, int fontSize, Color color) {
+/* Draw text centred on (centerX, centerY). */
+static void drawCenteredText(const char* text, int centerX, int centerY,
+                              int fontSize, Color color) {
     int textWidth = MeasureText(text, fontSize);
     DrawText(text, centerX - textWidth / 2, centerY - fontSize / 2, fontSize, color);
 }
 
+/* Draw an integer weight inside a rounded pill at position. */
 static void drawWeightLabel(int weight, Vector2 position) {
     char buffer[32];
     snprintf(buffer, sizeof(buffer), "%d", weight);
 
     int fontSize = 18;
-    int width = MeasureText(buffer, fontSize);
-    int padding = 5;
+    int width    = MeasureText(buffer, fontSize);
+    int padding  = 5;
 
     Rectangle labelBox = {
         position.x - width / 2.0f - padding,
@@ -41,6 +55,7 @@ static void drawWeightLabel(int weight, Vector2 position) {
     );
 }
 
+/* Draw a small ellipse loop above the node for edges where src == dst. */
 static void drawSelfLoop(Vector2 center, int weight) {
     Rectangle loopRect = {
         center.x - NODE_RADIUS,
@@ -50,9 +65,9 @@ static void drawSelfLoop(Vector2 center, int weight) {
     };
 
     DrawEllipseLines(
-        (int)(loopRect.x + loopRect.width / 2.0f),
+        (int)(loopRect.x + loopRect.width  / 2.0f),
         (int)(loopRect.y + loopRect.height / 2.0f),
-        loopRect.width / 2.0f,
+        loopRect.width  / 2.0f,
         loopRect.height / 2.0f,
         DARKGRAY
     );
@@ -65,13 +80,14 @@ static void drawSelfLoop(Vector2 center, int weight) {
     DrawTriangle(
         arrowTip,
         (Vector2){ arrowTip.x - 12.0f, arrowTip.y - 5.0f },
-        (Vector2){ arrowTip.x - 4.0f, arrowTip.y + 11.0f },
+        (Vector2){ arrowTip.x -  4.0f, arrowTip.y + 11.0f },
         DARKGRAY
     );
 
     drawWeightLabel(weight, (Vector2){ center.x, center.y - NODE_RADIUS - 62.0f });
 }
 
+/* Draw all edges (arrows + weight labels) for the given graph. */
 static void drawEdges(Graph* graph, NodeLayout* layout) {
     for (int src = 0; src < graph->numVertices; src++) {
         Edge* edge = graph->adjList[src];
@@ -86,7 +102,7 @@ static void drawEdges(Graph* graph, NodeLayout* layout) {
             }
 
             Vector2 from = layout->positions[src];
-            Vector2 to = layout->positions[dst];
+            Vector2 to   = layout->positions[dst];
 
             drawArrow(from, to, NODE_RADIUS, DARKGRAY);
 
@@ -98,6 +114,7 @@ static void drawEdges(Graph* graph, NodeLayout* layout) {
     }
 }
 
+/* Draw all node circles with their index labels. */
 static void drawNodes(Graph* graph, NodeLayout* layout) {
     for (int i = 0; i < graph->numVertices; i++) {
         Vector2 position = layout->positions[i];
@@ -113,19 +130,15 @@ static void drawNodes(Graph* graph, NodeLayout* layout) {
     }
 }
 
-static void drawHeader(const char* sourceFileName, int querySrc, int queryDst, int vertexCount) {
+/* Draw the top-of-screen title, file name, vertex count, and query. */
+static void drawHeader(const char* sourceFileName, int querySrc, int queryDst,
+                       int vertexCount) {
     DrawText("Directed Weighted Graph", 30, 24, 28, DARKBLUE);
 
     char info[512];
-    snprintf(
-        info,
-        sizeof(info),
-        "File: %s | Vertices: %d | Dijkstra query: %d -> %d",
-        sourceFileName,
-        vertexCount,
-        querySrc,
-        queryDst
-    );
+    snprintf(info, sizeof(info),
+             "File: %s | Vertices: %d | Dijkstra query: %d -> %d",
+             sourceFileName, vertexCount, querySrc, queryDst);
 
     DrawText(info, 30, 62, 18, DARKGRAY);
     DrawText("ESC / close window to exit", 30, SCREEN_HEIGHT - 34, 18, GRAY);
@@ -138,6 +151,8 @@ void draw_static_graph(Graph* graph, NodeLayout* layout,
     drawNodes(graph, layout);
 }
 
+/* Re-draw path edges in orange on top of the grey graph so the shortest path
+ * stands out.  Guards against out-of-range indices from stale PathResult. */
 void draw_path_highlight(int* path, int path_len, Graph* graph, NodeLayout* layout) {
     if (!path || path_len < 2 || !graph || !layout) return;
 

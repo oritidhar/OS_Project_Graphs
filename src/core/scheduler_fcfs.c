@@ -1,14 +1,30 @@
+/*
+ * scheduler_fcfs.c — First Come First Served scheduler + dispatcher.
+ *
+ * FCFS per-node queue:
+ *   Each node has a singly-linked FIFO list.  fcfs_enqueue() appends to the
+ *   tail in O(1); fcfs_next() removes the head in O(1).  Arrival order is
+ *   preserved by construction — no comparison needed.
+ *
+ * Dispatcher (scheduler_* functions):
+ *   scheduler_init() selects FCFS or SJF at runtime.  All other scheduler_*
+ *   calls delegate to either fcfs_* or sjf_* based on current_scheduler.
+ *   The dispatcher also prints [SCHED] log lines consumed by the test harness.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "core/scheduler.h"
 
 #define FCFS_MAX_NODES 1024
 
+/* One entry in the per-node FIFO wait list. */
 typedef struct FCFSQueueNode {
     TravelerInfo traveler;
     struct FCFSQueueNode* next;
 } FCFSQueueNode;
 
+/* head/tail pointers give O(1) enqueue and dequeue. */
 static FCFSQueueNode* queue_heads[FCFS_MAX_NODES];
 static FCFSQueueNode* queue_tails[FCFS_MAX_NODES];
 static SchedulerType current_scheduler = FCFS;
@@ -17,6 +33,7 @@ static int is_valid_node(int node_id) {
     return node_id >= 0 && node_id < FCFS_MAX_NODES;
 }
 
+/* Free all nodes and reset both pointers to NULL. */
 void fcfs_init(void) {
     for (int i = 0; i < FCFS_MAX_NODES; i++) {
         FCFSQueueNode* current = queue_heads[i];
@@ -31,6 +48,7 @@ void fcfs_init(void) {
     }
 }
 
+/* Append traveler t to the tail of node_id's queue. */
 void fcfs_enqueue(int node_id, TravelerInfo t) {
     if (!is_valid_node(node_id)) {
         return;
@@ -54,6 +72,7 @@ void fcfs_enqueue(int node_id, TravelerInfo t) {
     queue_tails[node_id] = node;
 }
 
+/* Remove the head and return its PID; returns -1 if queue is empty. */
 pid_t fcfs_next(int node_id) {
     if (!is_valid_node(node_id) || queue_heads[node_id] == NULL) {
         return -1;
@@ -71,6 +90,7 @@ pid_t fcfs_next(int node_id) {
     return pid;
 }
 
+/* Count the number of travelers queued for node_id. */
 int fcfs_waiting_count(int node_id) {
     if (!is_valid_node(node_id)) {
         return 0;
@@ -83,6 +103,8 @@ int fcfs_waiting_count(int node_id) {
     return count;
 }
 
+/* Walk the traveler's stored path to find how many hops remain from node_id.
+ * Used by scheduler_enqueue() when path_remaining is not in the IPC message. */
 static int path_remaining_for_node(const TravelerInfo* traveler, int node_id) {
     if (traveler == NULL || traveler->path_result == NULL || traveler->path_result->path == NULL) {
         return 0;
@@ -97,11 +119,14 @@ static int path_remaining_for_node(const TravelerInfo* traveler, int node_id) {
     return traveler->path_result->path_len;
 }
 
+/* ── dispatcher ─────────────────────────────────────────────────────────── */
+
 void scheduler_init(SchedulerType type) {
     current_scheduler = type;
     scheduler_reset();
 }
 
+/* Clear all queues (both algorithms) so a restarted simulation starts fresh. */
 void scheduler_reset(void) {
     fcfs_init();
     sjf_init();

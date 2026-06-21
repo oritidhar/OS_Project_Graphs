@@ -1,3 +1,17 @@
+/*
+ * draw_entity.c — per-frame rendering of traveler circles and status overlays.
+ *
+ * A traveler can be in one of three visual states:
+ *   MOVING   — linearly interpolated between current_node and next_node using
+ *               edge_progress ∈ [0,1].
+ *   WAITING  — blocked outside a locked node; drawn at 82% along the approach
+ *               edge with a pulsing yellow ring to signal contention.
+ *   FINISHED — not drawn (already at destination).
+ *
+ * When several travelers wait for the same node, draw_all_travelers() spreads
+ * them out perpendicularly (22 px per waiter) so they do not overlap.
+ */
+
 #include "gui/draw_entity.h"
 
 #include <math.h>
@@ -12,6 +26,8 @@ void draw_entity(const Traveler* traveler, const Vector2* nodePos)
                       && traveler->anim.blocked_at_node >= 0;
 
     if (is_waiting) {
+        /* Place the circle 82% of the way toward the blocked node so it is
+         * visually "just outside" the node without overlapping its circle. */
         Vector2 start = nodePos[traveler->anim.current_node];
         Vector2 end   = nodePos[traveler->anim.blocked_at_node];
         pos.x = start.x + 0.82f * (end.x - start.x);
@@ -24,6 +40,7 @@ void draw_entity(const Traveler* traveler, const Vector2* nodePos)
         DrawCircleLinesV(pos, 16.0f, ring);
         DrawCircleLinesV(pos, 12.0f, DARKGRAY);
     } else {
+        /* Linearly interpolate between current and next node. */
         float progress = traveler->anim.edge_progress;
         Vector2 start  = nodePos[traveler->anim.current_node];
         Vector2 end    = nodePos[traveler->anim.next_node];
@@ -47,7 +64,8 @@ void draw_all_travelers(const Traveler* travelers, int count, const Vector2* nod
 
         int blocked = travelers[i].anim.blocked_at_node;
 
-        /* count how many earlier waiters share this blocked node */
+        /* Count how many earlier travelers are already waiting at the same node
+         * so we can offset this one perpendicularly to avoid overlap. */
         int waiter_idx = 0;
         for (int j = 0; j < i; j++) {
             if (travelers[j].anim.waiting_for_node &&
@@ -55,14 +73,14 @@ void draw_all_travelers(const Traveler* travelers, int count, const Vector2* nod
                 waiter_idx++;
         }
 
-        /* base position: 82% along edge toward blocked node */
+        /* Base position: 82% along the approach edge. */
         Vector2 start = nodePos[travelers[i].anim.current_node];
         Vector2 end   = (blocked >= 0) ? nodePos[blocked] : start;
         Vector2 pos;
         pos.x = start.x + 0.82f * (end.x - start.x);
         pos.y = start.y + 0.82f * (end.y - start.y);
 
-        /* perpendicular offset so waiters don't stack on top of each other */
+        /* Perpendicular offset so waiters fan out side-by-side. */
         float dx = end.x - start.x;
         float dy = end.y - start.y;
         float len = sqrtf(dx * dx + dy * dy);
@@ -91,7 +109,8 @@ void draw_locked_nodes(const Traveler* travelers, int count, const Vector2* node
         int blocked = travelers[i].anim.blocked_at_node;
         if (blocked < 0) continue;
 
-        /* draw once per unique blocked node */
+        /* Only draw once per unique blocked node even if multiple travelers
+         * are waiting for it. */
         bool already = false;
         for (int j = 0; j < i; j++) {
             if (travelers[j].anim.waiting_for_node &&
@@ -126,7 +145,6 @@ void draw_travelers_legend(Traveler* travelers, int count)
 
         char label[64];
         snprintf(label, sizeof(label), "Traveler %d", i + 1);
-
         DrawText(label, x + 30, rowY, 18, BLACK);
     }
 }

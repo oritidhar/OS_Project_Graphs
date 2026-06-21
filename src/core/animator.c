@@ -1,9 +1,24 @@
+/*
+ * animator.c — frame-by-frame movement of a traveler along a PathResult.
+ *
+ * The state machine has two phases that alternate until the path is exhausted:
+ *   SLIDE  — edge_timer runs up to (weight × ANIMATOR_EDGE_STEP_TIME) seconds,
+ *             edge_progress is linearly interpolated and read by the renderer.
+ *   WAIT   — wait_timer runs up to ANIMATOR_NODE_WAIT_TIME seconds while the
+ *             traveler sits at the newly reached intermediate node.
+ *
+ * animator_tick() is called once per frame with the elapsed delta time.
+ * For multi-process milestones (M5+) the parent updates AnimState directly
+ * from IPC messages and does NOT call animator_tick().
+ */
+
 #include "core/animator.h"
 
 static bool animator_has_valid_path(PathResult* result) {
     return result != 0 && result->path != 0 && result->path_len > 0;
 }
 
+/* Return the edge weight at edge_index, falling back to 1 on bad input. */
 static int animator_get_current_edge_weight(PathResult* result, int edge_index) {
     if (result == 0 || result->edge_weights == 0) {
         return 1;
@@ -44,6 +59,7 @@ void animator_init(AnimState* state, PathResult* result) {
 
     state->current_node = result->path[0];
 
+    /* Single-node path (src == dst): mark finished immediately. */
     if (result->path_len == 1) {
         state->next_node = -1;
         state->finished = true;
@@ -70,6 +86,7 @@ void animator_tick(AnimState* state, PathResult* result, float dt) {
         return;
     }
 
+    /* ── WAIT phase ── */
     if (state->waiting) {
         state->wait_timer += dt;
 
@@ -89,6 +106,7 @@ void animator_tick(AnimState* state, PathResult* result, float dt) {
         return;
     }
 
+    /* ── SLIDE phase ── */
     if (state->current_edge_index >= result->path_len - 1) {
         state->finished = true;
         state->is_playing = false;
@@ -105,10 +123,12 @@ void animator_tick(AnimState* state, PathResult* result, float dt) {
     if (state->edge_progress >= 1.0f) {
         state->edge_progress = 1.0f;
 
+        /* Arrived at the next node — advance the edge index. */
         state->current_node = result->path[state->current_edge_index + 1];
         state->current_edge_index++;
 
         if (state->current_edge_index >= result->path_len - 1) {
+            /* Reached the destination: stop. */
             state->next_node = -1;
             state->finished = true;
             state->is_playing = false;
@@ -117,6 +137,7 @@ void animator_tick(AnimState* state, PathResult* result, float dt) {
 
         state->next_node = result->path[state->current_edge_index + 1];
 
+        /* Enter the WAIT phase at this intermediate node. */
         state->waiting = true;
         state->wait_timer = 0.0f;
         state->edge_timer = 0.0f;

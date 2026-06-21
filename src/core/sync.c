@@ -1,3 +1,19 @@
+/*
+ * sync.c — per-node mutual exclusion via POSIX named semaphores.
+ *
+ * sync_init() creates one named semaphore per graph node, each with an
+ * initial value of 1 (binary semaphore = mutex).  Names are built as
+ * "/osproj_node_<PID>_<i>" so concurrent simulations on the same machine
+ * cannot interfere with each other.
+ *
+ * Children call node_try_lock() first.  If the node is free they enter
+ * immediately; otherwise they send a "waiting" IPC message and call
+ * node_lock() to block until the current occupant calls node_unlock().
+ *
+ * sync_cleanup() is called by the parent after all children have exited to
+ * close and unlink every semaphore and release kernel resources.
+ */
+
 #include "core/sync.h"
 
 #include <errno.h>
@@ -9,9 +25,9 @@
 
 #define SEM_NAME_MAX_LEN 64
 
-static sem_t** node_sems = NULL;
-static char** node_sem_names = NULL;
-static int node_sem_count = 0;
+static sem_t** node_sems      = NULL;
+static char**  node_sem_names = NULL;
+static int     node_sem_count = 0;
 
 static void fail_and_exit(const char* message) {
     perror(message);
@@ -25,7 +41,7 @@ int sync_init(int node_count) {
         return -1;
     }
 
-    node_sems = calloc((size_t)node_count, sizeof(sem_t*));
+    node_sems      = calloc((size_t)node_count, sizeof(sem_t*));
     node_sem_names = calloc((size_t)node_count, sizeof(char*));
 
     if (!node_sems || !node_sem_names) {
@@ -48,6 +64,7 @@ int sync_init(int node_count) {
         snprintf(node_sem_names[i], SEM_NAME_MAX_LEN,
                  "/osproj_node_%ld_%d", (long)getpid(), i);
 
+        /* Unlink any leftover semaphore from a previous crashed run. */
         sem_unlink(node_sem_names[i]);
 
         node_sems[i] = sem_open(node_sem_names[i], O_CREAT | O_EXCL, 0600, 1);
@@ -84,7 +101,7 @@ void sync_cleanup(void) {
     free(node_sems);
     free(node_sem_names);
 
-    node_sems = NULL;
+    node_sems      = NULL;
     node_sem_names = NULL;
     node_sem_count = 0;
 }
@@ -96,6 +113,8 @@ static void validate_node_id(int node_id) {
     }
 }
 
+/* Attempt to decrement the semaphore without blocking.
+ * Returns true if the lock was acquired, false if the node is occupied. */
 bool node_try_lock(int node_id) {
     validate_node_id(node_id);
 
@@ -111,6 +130,8 @@ bool node_try_lock(int node_id) {
     return false;
 }
 
+/* Block until the semaphore can be decremented (node becomes free).
+ * Retries automatically on EINTR so signals do not cause a spurious failure. */
 void node_lock(int node_id) {
     validate_node_id(node_id);
 
@@ -121,6 +142,7 @@ void node_lock(int node_id) {
     }
 }
 
+/* Increment the semaphore, waking one waiting traveler if any. */
 void node_unlock(int node_id) {
     validate_node_id(node_id);
 
