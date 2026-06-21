@@ -30,8 +30,8 @@ static void drawWeightLabel(int weight, Vector2 position) {
         fontSize + padding * 2.0f
     };
 
-    DrawRectangleRoundedLines(labelBox, 0.35f, 8, LIGHTGRAY);
-    DrawRectangleRoundedLines(labelBox, 0.35f, 8, LIGHTGRAY);
+    DrawRectangleRounded(labelBox, 0.35f, 8, RAYWHITE);
+    DrawRectangleRoundedLines(labelBox, 0.35f, 8, 2.0f, LIGHTGRAY);
     DrawText(
         buffer,
         (int)(position.x - width / 2.0f),
