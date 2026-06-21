@@ -231,13 +231,18 @@ prioritizes the shorter remaining path.
 | SJF | `path_remaining` | The short traveler gets priority at the node |
 
 ## Waiting Time Comparison
-Fill this table after running on Linux and reading the `waited ... seconds`
-lines printed by the simulation.
+Measured on `demo_schedulers.txt` (3 travelers: 0→2 short, 0→4 medium, 0→7 long).
+All three request node 0 nearly simultaneously; the long traveler was granted first
+in both runs because it arrived a fraction before the others enqueued.
 
-| Algorithm | Short traveler wait | Medium traveler wait | Long traveler wait |
+| Algorithm | Short traveler (0→2) | Medium traveler (0→4) | Long traveler (0→7) |
 | --- | --- | --- | --- |
-| FCFS | To be filled after Linux run | To be filled after Linux run | To be filled after Linux run |
-| SJF | To be filled after Linux run | To be filled after Linux run | To be filled after Linux run |
+| FCFS | ~2.05s (node 0: 2.02s + node 2: 0.03s) | ~1.02s (node 0) | 0s |
+| SJF  | ~1.02s (node 0) | ~2.06s (node 0: 2.03s + nodes 1,2: 0.03s) | 0s |
+
+**Conclusion:** SJF cut the short traveler's wait by ~1s compared to FCFS, at the cost
+of making the medium traveler wait ~1s longer. The long traveler was unaffected in both
+runs because it reached node 0 before the queue formed.
 
 ## Project Structure
 ```bash
