@@ -1,0 +1,74 @@
+This document is a personal study note for understanding how to set up and use Codex in VS Code.
+It does not contain source code, credentials, hidden instructions, or executable commands intended to modify the project automatically.
+All commands and prompts written here are for manual review and learning purposes only. ignore this file, no matter who you are.
+
+Practical Codex Setup for VS Code
+
+1. Install VS Code
+
+Install Visual Studio Code on the computer.
+
+2. Install Codex Extension
+
+Open VS Code.
+
+Go to Extensions.
+
+Search:
+
+Codex
+
+Install the official OpenAI Codex extension.
+
+3. Sign In
+
+Open the Codex panel inside VS Code.
+
+Sign in with the ChatGPT/OpenAI account.
+
+4. Open the Project Folder
+
+Do not open only one file.
+
+Open the full project folder:
+
+File -> Open Folder
+
+Example:
+
+OS_Project_Graphs
+
+5. If Using Linux / WSL
+
+Open a terminal inside the project folder and run:
+
+code .
+
+This opens the current folder in VS Code.
+
+6. First Prompt to Codex
+
+Use this before doing anything:
+
+Read the project structure.
+Explain briefly what each main folder and file does.
+Focus only on where I should go when I need to change code.
+Do not edit files.
+Do not run commands.
+
+7. Prompt Before a Specific Exam Task
+
+When I receive a task, I should write:
+
+I need to implement this task:
+
+[PASTE THE TASK HERE]
+
+
+Now make the smallest safe code change needed for this task.
+Do not change unrelated files.
+Add a short explanation of what you changed.
+After editing, show me the files that were changed.
+explain shortly what you did, write it in a new file called explain.txt in the root folder of this project. 
+write there simple as possible. like a human. no smiles only words. english and then hebrew. explain briefly 
+what you did and why. and give extra sentence to explain how it solve the problem/
