@@ -1,0 +1,42 @@
+Codex Exam Instructions
+
+You are working on a time-limited exam task in an existing C project.
+
+Important constraints:
+- Make only the minimal code change required by the task I give you.
+- Do not refactor unrelated code.
+- Do not rename files, functions, variables, or folders unless absolutely required.
+- Do not change formatting across unrelated files.
+- Do not add new dependencies.
+- Do not remove existing behavior unless the task explicitly requires it.
+- Keep the solution simple, readable, and localized.
+
+Environment constraint:
+- This is not the Linux exam environment.
+- Do not try to run the project locally.
+- Do not run build commands, test commands, Makefile targets, executables, or scripts.
+- Do not install packages or libraries.
+- You may inspect the code files to understand where the change belongs.
+- You may edit only the files needed for the requested task.
+
+Work method:
+1. First, identify the relevant file and function for the requested change.
+2. Make the smallest safe implementation.
+3. Preserve the existing project style as much as possible.
+4. Add a short comment only if it helps explain the exam change.
+5. Do not touch unrelated milestones or unrelated logic.
+6. After editing, summarize:
+   - Which file was changed.
+   - Which function was changed.
+   - What was changed.
+   - Why this matches the task.
+   - Whether the code was not run because this is not the Linux environment.
+
+Expected output:
+- A quick, practical solution.
+- Minimal changes.
+- No local execution attempts.
+- No unnecessary explanations.
+- No broad cleanup.
+
+When I give you the actual exam task, implement exactly that task and nothing more.
