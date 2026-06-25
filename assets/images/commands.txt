@@ -1,0 +1,52 @@
+
+# 1. Clone the project from GitHub
+git clone https://github.com/oritidhar/OS_Project_Graphs.git
+
+# 2. Enter the project folder
+cd OS_Project_Graphs
+
+# 3. Make sure you are on the main branch
+git checkout main
+
+# 4. Pull the latest version
+git pull origin main
+
+Create your personal exam branch:
+
+# If you chose task A:
+git checkout -b exam_a/YOUR_ID_NUMBER
+
+# If you chose task B:
+git checkout -b exam_b/YOUR_ID_NUMBER
+
+During the task, useful checks:
+
+# Check current branch
+git branch
+
+# 2. Add all changed files
+git add .
+
+# 3. Commit your work
+git commit -m "Task A: implemented required change - steps 1,2,3"
+
+# 4. Push your branch to GitHub
+git push origin exam_a/YOUR_ID_NUMBER
+
+If you chose task B:
+
+git commit -m "Task B: implemented required change - steps 1,2,3"
+
+git push origin exam_b/YOUR_ID_NUMBER
+
+Commit message options:
+
+# If everything works:
+git commit -m "Task A: implemented required change - steps 1,2,3"
+
+# If code is logical but does not run:
+git commit -m "Task A: implemented required change - steps 1,2"
+
+# If you only found the correct place in the code:
+git commit -m "Task A: located relevant code - step 1"
+
