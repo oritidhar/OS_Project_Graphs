@@ -23,6 +23,8 @@ bin/
 dist/
 out/
 
+CODEX_EXAM_INSTRUCTIONS.txt
+
 # =========================
 # Compiled objects / libs / executables
 # =========================

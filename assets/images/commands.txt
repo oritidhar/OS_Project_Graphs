@@ -50,3 +50,26 @@ git commit -m "Task A: implemented required change - steps 1,2"
 # If you only found the correct place in the code:
 git commit -m "Task A: located relevant code - step 1"
 
+
+
+#actual run: להריץ ניקוי בין פקודה לפקודה
+make clean
+
+
+make milestone7
+./sim -schd fcfs demo_schedulers.txt
+./sim -schd sjf demo_schedulers.txt
+
+
+make milestone6
+./sim assets/samples/test_m6_two_conflict.txt
+
+make milestone5
+./sim assets/samples/test_m5.txt
+
+make milestone4
+./sim tests/milestone4/test_m4.txt
+
+
+make milestone3
+./sim tests/dijkstra/test_normal.txt
