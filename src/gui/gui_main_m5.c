@@ -65,7 +65,9 @@ static bool all_travelers_finished(Traveler* travelers, int count) {
 }
 
 static void print_ipc_log(const IPCMessage* msg) {
-    if (msg->finished) {
+    if (msg->no_path) {
+        printf("[PID=%d] NO PATH to destination (unreachable)\n", msg->pid);
+    } else if (msg->finished) {
         printf("[PID=%d] finished\n", msg->pid);
     } else if (msg->next_node == -1) {
         printf("[PID=%d] arrived at node %d | DESTINATION\n",
@@ -78,6 +80,19 @@ static void print_ipc_log(const IPCMessage* msg) {
 }
 
 static void apply_ipc_message(Traveler* traveler, const IPCMessage* msg) {
+    /* Special case (milestone 5): the child reported it has NO path to its
+     * destination. Handle it separately from all normal messages: print a
+     * dedicated notice and mark the traveler finished so the GUI does not
+     * wait on it forever. */
+    if (msg->no_path) {
+        printf("[PARENT] !!! PID=%d has NO PATH to its destination (node %d unreachable) !!!\n",
+               msg->pid, traveler->dst);
+        fflush(stdout);
+        traveler->anim.finished   = true;
+        traveler->anim.is_playing = false;
+        return;
+    }
+
     //save the prev state of the traveler to see time of changing
     bool was_waiting = traveler->anim.waiting_for_node; 
     int prev_blocked_node = traveler->anim.blocked_at_node;
