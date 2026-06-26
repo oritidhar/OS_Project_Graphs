@@ -9,7 +9,7 @@
  * Dispatcher (scheduler_* functions):
  *   scheduler_init() selects FCFS or SJF at runtime.  All other scheduler_*
  *   calls delegate to either fcfs_* or sjf_* based on current_scheduler.
- *   The dispatcher also prints [SCHED] log lines consumed by the test harness.
+ *   The dispatcher also prints scheduler decision lines for runtime tracing.
  */
 
 #include <stdio.h>
@@ -103,6 +103,31 @@ int fcfs_waiting_count(int node_id) {
     return count;
 }
 
+
+void fcfs_describe_waiting(int node_id, char* buffer, int buffer_size) {
+    if (buffer == NULL || buffer_size <= 0) {
+        return;
+    }
+
+    if (!is_valid_node(node_id) || queue_heads[node_id] == NULL) {
+        snprintf(buffer, buffer_size, "none");
+        return;
+    }
+
+    int written = 0;
+    for (FCFSQueueNode* node = queue_heads[node_id]; node != NULL && written < buffer_size; node = node->next) {
+        int remaining = buffer_size - written;
+        int n = snprintf(buffer + written, remaining, "%s%d", written == 0 ? "" : ", ", (int)node->traveler.pid);
+        if (n < 0) {
+            break;
+        }
+        if (n >= remaining) {
+            buffer[buffer_size - 1] = '\0';
+            break;
+        }
+        written += n;
+    }
+}
 /* Walk the traveler's stored path to find how many hops remain from node_id.
  * Used by scheduler_enqueue() when path_remaining is not in the IPC message. */
 static int path_remaining_for_node(const TravelerInfo* traveler, int node_id) {
@@ -119,7 +144,15 @@ static int path_remaining_for_node(const TravelerInfo* traveler, int node_id) {
     return traveler->path_result->path_len;
 }
 
-/* ── dispatcher ─────────────────────────────────────────────────────────── */
+/* -- dispatcher ---------------------------------------------------------- */
+
+static void describe_current_waiting(int node_id, char* buffer, int buffer_size) {
+    if (current_scheduler == SJF) {
+        sjf_describe_waiting(node_id, buffer, buffer_size);
+    } else {
+        fcfs_describe_waiting(node_id, buffer, buffer_size);
+    }
+}
 
 void scheduler_init(SchedulerType type) {
     current_scheduler = type;
@@ -137,20 +170,32 @@ void scheduler_enqueue(int node_id, TravelerInfo t) {
 }
 
 void scheduler_enqueue_with_remaining(int node_id, TravelerInfo t, int path_remaining) {
+    char waiting_after[256];
+
+    printf("[SCHEDULER][%s] Traveler %d is waiting at node %d (remaining path=%d)\n",
+           scheduler_get_name(), (int)t.pid, node_id, path_remaining);
+
     if (current_scheduler == SJF) {
         sjf_enqueue(node_id, t, path_remaining);
     } else {
         fcfs_enqueue(node_id, t);
     }
 
-    printf("[SCHED] type=%s enqueue node=%d pid=%d path_remaining=%d waiting_count=%d\n",
-           scheduler_get_name(), node_id, (int)t.pid, path_remaining,
-           scheduler_waiting_count(node_id));
+    describe_current_waiting(node_id, waiting_after, sizeof(waiting_after));
+    printf("[SCHEDULER][%s] Traveler %d was added to node %d queue; waiting now: [%s]\n",
+           scheduler_get_name(), (int)t.pid, node_id, waiting_after);
     fflush(stdout);
 }
 
 pid_t scheduler_next(int node_id) {
+    char waiting_before[256];
+    char waiting_after[256];
+    const char* reason = current_scheduler == SJF
+        ? "it has the shortest remaining path"
+        : "it arrived first";
     pid_t selected;
+
+    describe_current_waiting(node_id, waiting_before, sizeof(waiting_before));
 
     if (current_scheduler == SJF) {
         selected = sjf_next(node_id);
@@ -158,8 +203,14 @@ pid_t scheduler_next(int node_id) {
         selected = fcfs_next(node_id);
     }
 
-    printf("[SCHED] next node=%d selected pid=%d waiting_count=%d\n",
-           node_id, (int)selected, scheduler_waiting_count(node_id));
+    describe_current_waiting(node_id, waiting_after, sizeof(waiting_after));
+    if (selected == -1) {
+        printf("[SCHEDULER][%s] No traveler selected at node %d; waiting queue was: [%s]\n",
+               scheduler_get_name(), node_id, waiting_before);
+    } else {
+        printf("[SCHEDULER][%s] Selected traveler %d at node %d because %s; waiting before: [%s]; still waiting: [%s]\n",
+               scheduler_get_name(), (int)selected, node_id, reason, waiting_before, waiting_after);
+    }
     fflush(stdout);
     return selected;
 }
