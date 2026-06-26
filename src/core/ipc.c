@@ -1,55 +1,41 @@
 /*
- * ipc.c — pipe creation and atomic IPCMessage read/write.
+ * ipc.h — inter-process communication between traveler children and the parent.
  *
- * Each traveler child writes one IPCMessage at a time.  sizeof(IPCMessage) is
- * well under PIPE_BUF (4096 bytes on Linux), so each write() is guaranteed to
- * be atomic — no partial message will ever be read by the parent.
- *
- * The read ends are set to O_NONBLOCK so the parent's GUI loop can poll all
- * pipes in a single pass without blocking on a slow or idle traveler.
+ * Each child has one pipe.  The child writes IPCMessage structs into the write
+ * end; the parent polls the read ends with ipc_recv() from inside the GUI loop.
+ * The read end is set to O_NONBLOCK so the parent never stalls waiting for a
+ * single traveler.
  */
 
-#include <unistd.h>
-#include <stdio.h>
-#include <errno.h>
-#include <fcntl.h>
+#ifndef IPC_H
+#define IPC_H
 
-#include "core/ipc.h"
+#include <sys/types.h>
+#include <stdbool.h>
 
-int ipc_open_pipes(int (*pipe_fds)[2], int n) {
-    for (int i = 0; i < n; i++) {
-        if (pipe(pipe_fds[i]) < 0) {
-            perror("pipe");
-            return -1;
-        }
+typedef struct {
+    pid_t  pid;
+    double arrival_time;   /* gettimeofday timestamp when node was requested */
+    int    path_remaining; /* hops left at time of request; used by SJF */
+    int    current_node;
+    int    next_node;      /* -1 when the traveler has just reached its destination */
+    bool   finished;       /* true on the final "I am done" message */
+    bool   waiting_for_node; /* true while blocked outside a locked node */
+    int    blocked_at_node; 
+    bool   no_path; /* the node being waited on; -1 if not waiting */
+} IPCMessage;
 
-        /* Set the read end to non-blocking so the parent's poll loop never
-         * stalls waiting for a message from one specific traveler. */
-        int flags = fcntl(pipe_fds[i][0], F_GETFL, 0);
-        if (flags < 0 || fcntl(pipe_fds[i][0], F_SETFL, flags | O_NONBLOCK) < 0) {
-            perror("fcntl");
-            return -1;
-        }
-    }
+/* Open one pipe per traveler and set each read end to O_NONBLOCK.
+ * pipe_fds[i][0] = read end, pipe_fds[i][1] = write end. */
+int  ipc_open_pipes(int (*pipe_fds)[2], int n);
 
-    return 0;
-}
+/* Write one complete IPCMessage into write_fd (blocking write). */
+void ipc_send(int write_fd, IPCMessage* msg);
 
-/* Atomic write: sizeof(IPCMessage) < PIPE_BUF so this never splits a message. */
-void ipc_send(int write_fd, IPCMessage* msg) {
-    write(write_fd, msg, sizeof(IPCMessage));
-}
+/* Non-blocking read of one IPCMessage from read_fd.
+ * Returns  1 = message received,
+ *          0 = no data yet (EAGAIN/EWOULDBLOCK),
+ *         -1 = error or EOF (child exited). */
+int  ipc_recv(int read_fd, IPCMessage* msg);
 
-int ipc_recv(int read_fd, IPCMessage* msg) {
-    ssize_t n = read(read_fd, msg, sizeof(IPCMessage));
-
-    if (n == (ssize_t)sizeof(IPCMessage)) {
-        return 1;
-    }
-
-    if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-        return 0;  /* nothing available right now */
-    }
-
-    return -1;  /* EOF (child exited) or real error */
-}
+#endif
