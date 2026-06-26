@@ -103,8 +103,13 @@ void spawn_travelers(Traveler* travelers, int n) {
 
                 PathResult* result = dijkstra_compute_path(graph, travelers[i].src, travelers[i].dst);
                 if (!result){
-                    fprintf(stderr, "Failed to compute path for traveler %d\n", i);
-                    exit(EXIT_FAILURE);
+                    IPCMessage no_path_msg = {0};
+                    no_path_msg.pid = getpid();
+                    no_path_msg.no_path = true;
+                    no_path_msg.finished = true;
+                    ipc_send(write_fd, &no_path_msg);
+                    close(write_fd);
+                    exit(EXIT_SUCCESS);
                 }
 
                 sigset_t grant_set;
