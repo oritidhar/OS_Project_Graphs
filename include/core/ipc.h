@@ -21,7 +21,8 @@ typedef struct {
     int    next_node;      /* -1 when the traveler has just reached its destination */
     bool   finished;       /* true on the final "I am done" message */
     bool   waiting_for_node; /* true while blocked outside a locked node */
-    int    blocked_at_node;  /* the node being waited on; -1 if not waiting */
+    int    blocked_at_node; 
+    bool   no_path; /* the node being waited on; -1 if not waiting */
 } IPCMessage;
 
 /* Open one pipe per traveler and set each read end to O_NONBLOCK.
