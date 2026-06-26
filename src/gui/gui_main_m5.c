@@ -78,9 +78,17 @@ static void print_ipc_log(const IPCMessage* msg) {
 }
 
 static void apply_ipc_message(Traveler* traveler, const IPCMessage* msg) {
-    //save the prev state of the traveler to see time of changing
+    // save the prev state of the traveler to see time of changing
     bool was_waiting = traveler->anim.waiting_for_node; 
     int prev_blocked_node = traveler->anim.blocked_at_node;
+
+    if (msg->no_path) {
+        printf("[PID=%d] No path to destination!\n", msg->pid);
+        fflush(stdout);
+        traveler->anim.finished = true;
+        traveler->anim.is_playing = false;
+        return; 
+    }
 
     if (msg->waiting_for_node) {
         int node = msg->blocked_at_node;
@@ -127,7 +135,7 @@ static void apply_ipc_message(Traveler* traveler, const IPCMessage* msg) {
         return;
     }
 
-    //the traveler was blocked on this node and now enters it
+    // the traveler was blocked on this node and now enters it
     if(was_waiting && prev_blocked_node == msg->current_node){
         struct timeval end_time;
         gettimeofday(&end_time, NULL);
@@ -138,17 +146,18 @@ static void apply_ipc_message(Traveler* traveler, const IPCMessage* msg) {
         fflush(stdout);
         gettimeofday(&end_time, NULL);
     }
-    //normal entry: traveler was not waiting, and this is not the finished sentinel
+    
+    // normal entry: traveler was not waiting, and this is not the finished sentinel
     if(!was_waiting && !msg->finished){
         printf("[PID=%d] entered node %d\n", msg->pid, msg->current_node);
         fflush(stdout);
     }
 
-    //the traveler enter the node
+    // the traveler enter the node
     traveler->anim.waiting_for_node = false;
     traveler->anim.blocked_at_node = -1;
 
-    //update animation location
+    // update animation location
     traveler->anim.current_node = msg->current_node;
     traveler->anim.edge_progress = 0.0f;
     traveler->anim.waiting       = false;
@@ -156,9 +165,9 @@ static void apply_ipc_message(Traveler* traveler, const IPCMessage* msg) {
 
     traveler->anim.finished = false;
     traveler->anim.next_node = (msg->next_node == -1) ? msg->current_node : msg->next_node;
-
-
 }
+
+
 
 static void poll_ipc_messages(Traveler* travelers, int count, int (*pipe_fds)[2]) {
     for (int i = 0; i < count; i++) {
@@ -405,6 +414,14 @@ int main(int argc, char* argv[]) {
         draw_locked_nodes(travelers, traveler_count, layout.positions);
         draw_all_travelers(travelers, traveler_count, layout.positions);
         draw_travelers_legend(travelers, traveler_count);
+        if (sim_state != SIM_IDLE) {
+            for (int i = 0; i < traveler_count; i++) {
+                if (travelers[i].path_result == NULL) {
+                    DrawText("ALERT: No Path Found For Traveler!", 350, 30, 26, RED);
+                    break; 
+                }
+            }
+        }
 
         switch (sim_state) {
             case SIM_IDLE:
