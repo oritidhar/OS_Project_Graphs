@@ -22,6 +22,7 @@ typedef struct {
     bool   finished;       /* true on the final "I am done" message */
     bool   waiting_for_node; /* true while blocked outside a locked node */
     int    blocked_at_node;  /* the node being waited on; -1 if not waiting */
+    bool   no_path;          /* true when the child found NO route to its dst */
 } IPCMessage;
 
 /* Open one pipe per traveler and set each read end to O_NONBLOCK.
