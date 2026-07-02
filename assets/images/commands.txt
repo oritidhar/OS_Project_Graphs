@@ -73,3 +73,9 @@ make milestone4
 
 make milestone3
 ./sim tests/dijkstra/test_normal.txt
+
+
+sudo apt update
+sudo apt install cmake
+sudo apt update && sudo apt install xorg-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+make clean
