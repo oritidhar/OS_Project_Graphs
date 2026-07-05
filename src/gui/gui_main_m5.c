@@ -326,6 +326,9 @@ int main(int argc, char* argv[]) {
                 fprintf(stderr, "Error: Missing value for -schd\n");
                 return 1;
             }
+        } else if (strcmp(argv[i], "-log") == 0) {
+            /* Exam Task B: Redirect all stdout to a log file */
+            freopen("simulation.log", "w", stdout);
         } else {
             input_file = argv[i]; 
         }
