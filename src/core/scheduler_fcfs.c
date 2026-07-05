@@ -151,15 +151,19 @@ void scheduler_enqueue_with_remaining(int node_id, TravelerInfo t, int path_rema
 
 pid_t scheduler_next(int node_id) {
     pid_t selected;
+    const char* reason = "";
 
     if (current_scheduler == SJF) {
         selected = sjf_next(node_id);
+        reason = "shortest path (SJF)";
     } else {
         selected = fcfs_next(node_id);
+        reason = "arrival order (FCFS)";
     }
 
-    printf("[SCHED] next node=%d selected pid=%d waiting_count=%d\n",
-           node_id, (int)selected, scheduler_waiting_count(node_id));
+    // reasons 
+    printf("[SCHED] next node=%d selected pid=%d reason=%s waiting_count=%d\n",
+           node_id, (int)selected, reason, scheduler_waiting_count(node_id));
     fflush(stdout);
     return selected;
 }
