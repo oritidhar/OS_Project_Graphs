@@ -51,10 +51,12 @@ void  fcfs_init(void);
 void  fcfs_enqueue(int node_id, TravelerInfo t);
 pid_t fcfs_next(int node_id);
 int   fcfs_waiting_count(int node_id);
+void  fcfs_describe_waiting(int node_id, char* buffer, int buffer_size);
 
 void  sjf_init(void);
 void  sjf_enqueue(int node_id, TravelerInfo t, int path_remaining);
 pid_t sjf_next(int node_id);
 int   sjf_waiting_count(int node_id);
+void  sjf_describe_waiting(int node_id, char* buffer, int buffer_size);
 
 #endif // SCHEDULER_H

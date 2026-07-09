@@ -8,6 +8,7 @@
  * are inserted after existing ones (<=, not <, in the walk condition).
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include "core/scheduler.h"
 
@@ -105,4 +106,30 @@ int sjf_waiting_count(int node_id) {
         count++;
     }
     return count;
+}
+
+void sjf_describe_waiting(int node_id, char* buffer, int buffer_size) {
+    if (buffer == NULL || buffer_size <= 0) {
+        return;
+    }
+
+    if (!is_valid_node(node_id) || queue_heads[node_id] == NULL) {
+        snprintf(buffer, buffer_size, "none");
+        return;
+    }
+
+    int written = 0;
+    for (SJFQueueNode* node = queue_heads[node_id]; node != NULL && written < buffer_size; node = node->next) {
+        int remaining = buffer_size - written;
+        int n = snprintf(buffer + written, remaining, "%s%d(rem=%d)",
+                         written == 0 ? "" : ", ", (int)node->traveler.pid, node->path_remaining);
+        if (n < 0) {
+            break;
+        }
+        if (n >= remaining) {
+            buffer[buffer_size - 1] = '\0';
+            break;
+        }
+        written += n;
+    }
 }
